@@ -1,21 +1,34 @@
 # Python
 backend/venv/
 backend/__pycache__/
+backend/**/__pycache__/
 backend/*.pyc
+backend/**/*.pyc
 backend/.env
-backend/alembic/versions/*.pyc
+backend/alembic/__pycache__/
+backend/alembic/versions/__pycache__/
+backend/app/__pycache__/
+backend/app/**/__pycache__/
 
 # Node
 frontend/node_modules/
 frontend/dist/
 frontend/.pnpm-store/
+frontend/.env
+frontend/.env.local
 
 # IDE
 .vscode/
 .idea/
+*.swp
 
 # OS
 .DS_Store
+Thumbs.db
 
 # Docker
 postgres_data/
+
+# Logs
+*.log
+npm-debug.log*
