@@ -45,8 +45,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    # CHANGED THIS LINE: url = config.get_main_option("sqlalchemy.url") TO:
-    url = settings.DATABASE_URL
+    # Use the database_url property which constructs the URL automatically
+    url = settings.database_url
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -71,9 +71,10 @@ def run_migrations_online() -> None:
     #    prefix="sqlalchemy.",
     #    poolclass=pool.NullPool,
     #)
-    # This will use the DATABASE_URL from settings.py to create the engine
+    # Use the database_url property which constructs the URL automatically
     from sqlalchemy import create_engine
-    connectable = create_engine(settings.DATABASE_URL)
+    database_url = settings.database_url
+    connectable = create_engine(database_url)
 
     with connectable.connect() as connection:
         context.configure(

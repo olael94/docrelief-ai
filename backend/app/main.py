@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from sqlalchemy import text  # ADD THIS IMPORT
+from sqlalchemy import text
 from app.db.session import get_db
+from app.routes import users
 
 app = FastAPI(title="DocRelief AI")
 
@@ -15,6 +16,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 
 @app.get("/")
 def read_root():
