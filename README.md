@@ -118,8 +118,7 @@ docrelief-ai/
 ├── frontend/
 │   ├── src/
 │   ├── public/
-│   ├── package.json
-│   └── tailwind.config.js
+│   └── package.json
 ├── docker-compose.yml
 └── README.md
 ```
@@ -130,6 +129,19 @@ docrelief-ai/
 - **Frontend:** React, Vite, Tailwind CSS
 - **Database:** PostgreSQL
 - **Tools:** Docker, Alembic, pnpm
+
+## Every time you start new work:
+```bash
+git checkout main
+git pull
+git checkout -b feature/my-feature
+
+# Make changes then commit:
+git add .
+git commit -m "feat: description"
+git push origin feature/my-feature
+```
+ Then create PR on GitHub, it will be reviewed and merged.
 
 
 

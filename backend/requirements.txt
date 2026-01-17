@@ -9,8 +9,10 @@ langchain-openai>=0.0.5
 openai>=1.6.1,<2.0.0
 
 sqlalchemy>=2.0.35
-psycopg[binary]>=3.2.0
+asyncpg==0.30.0
 alembic==1.13.0
+httpx==0.28.1
+greenlet>=3.0.0
 
 PyGithub==2.1.1
 aiofiles==23.2.1

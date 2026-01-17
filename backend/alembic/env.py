@@ -7,7 +7,7 @@ from alembic import context
 
 # ADD THESE THREE IMPORTS:
 from app.config import settings
-from app.db.base import Base
+from app.db.session import Base
 from app.models.user import User
 
 # this is the Alembic Config object, which provides
@@ -73,7 +73,9 @@ def run_migrations_online() -> None:
     #)
     # This will use the DATABASE_URL from settings.py to create the engine
     from sqlalchemy import create_engine
-    connectable = create_engine(settings.DATABASE_URL)
+    # Strip +asyncpg for sync migrations
+    sync_url = settings.DATABASE_URL.replace("+asyncpg", "")
+    connectable = create_engine(sync_url)
 
     with connectable.connect() as connection:
         context.configure(
