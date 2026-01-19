@@ -5,10 +5,11 @@ from sqlalchemy import pool
 
 from alembic import context
 
-# ADD THESE THREE IMPORTS:
+# ADD THESE IMPORTS:
 from app.config import settings
 from app.db.session import Base
-from app.models.user import User
+# Import all models so Alembic can detect them
+from app.models import User, Session, GeneratedReadme
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -73,8 +74,8 @@ def run_migrations_online() -> None:
     #)
     # This will use the DATABASE_URL from settings.py to create the engine
     from sqlalchemy import create_engine
-    # Strip +asyncpg for sync migrations
-    sync_url = settings.DATABASE_URL.replace("+asyncpg", "")
+    # Replace asyncpg with psycopg (psycopg3) for sync migrations
+    sync_url = settings.DATABASE_URL.replace("+asyncpg", "+psycopg")
     connectable = create_engine(sync_url)
 
     with connectable.connect() as connection:
