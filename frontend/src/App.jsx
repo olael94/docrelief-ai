@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { healthCheck } from './services/api';
+import Navbar from './components/Navbar';
 
 function App() {
     const [status, setStatus] = useState('checking...');
@@ -17,6 +18,8 @@ function App() {
     }, []);
 
     return (
+        <>
+        <Navbar />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
             <div className="text-center">
                 <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -27,6 +30,8 @@ function App() {
                 </p>
             </div>
         </div>
+        </>
+        
     );
 }
 
