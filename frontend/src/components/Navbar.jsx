@@ -2,7 +2,7 @@ export default function Navbar() {
   return (
     <>
         {/* TODO: Add custom gray */}
-        <nav className="navbar bg-navbar p-4 text-black flex justify-between items-center">
+        <nav className=" bg-gray-50 navbar m-4 bg-navbar rounded-3xl p-4 text-black font-bold flex justify-between items-center">
 
         {/* TODO: Add logo icon */}
         <div className="navbar-brand">
@@ -17,9 +17,6 @@ export default function Navbar() {
         </ul>
         </div>
 
-        
-
-        
         </nav>
     </>
     
