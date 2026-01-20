@@ -3,6 +3,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 body {
+    @apply bg-gray-50;
+}
+
+body {
     font-family: 'Inter', sans-serif;
 }
 
