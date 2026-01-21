@@ -1,7 +1,19 @@
+import { useState } from "react"
 import HeroButton from "./HeroButton"
 import TabBar from "./TabBar"
+import PublicRepoTab from "./PublicRepoTab";
+import UploadTab from "./UploadTab";
+import PrivateRepoTab from "./PrivateRepoTab";
 
 export default function Hero() {
+    const [activeTab, setActiveTab] = useState('public-repo');
+    
+    const tabs = [
+        { id: 'public-repo', label: 'Public Repo' },
+        { id: 'upload-files', label: 'Upload Files' },
+        { id: 'private-repo', label: 'Private Repo' },
+    ];
+    
     return (
         <>
         <div className="mt-20 mb-10 flex flex-col items-center justify-center">
@@ -14,10 +26,12 @@ export default function Hero() {
             
             <div className="pl-5 pr-5 rounded-4xl h-150 w-200 shadow-2xl flex flex-col items-center justify-center bg-white gap-4">
                 <h1 className="font-poppins text-4xl font-bold ">Generate README</h1>
-                <TabBar />
-                <input className="bg-navbar rounded-3xl p-2 w-full max-w-lg text-center" type="text" placeholder="Paste your public repo https://github.com/username/repo"></input>
-                <HeroButton text="Generate README →" />
-                <span className="mt-4 mb-4 text-bold">or upload files directly</span>
+                <TabBar activeTab={activeTab} setActiveTab={setActiveTab} tabs={tabs} />
+                <div>
+                    {activeTab === 'public-repo' && <PublicRepoTab />}
+                    {activeTab === 'upload-files' && <UploadTab />}
+                    {activeTab === 'private-repo' && <PrivateRepoTab />}
+                </div>
             </div>    
         </div>
         </>
