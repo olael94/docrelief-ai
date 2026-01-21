@@ -1,4 +1,5 @@
 import HeroButton from "./HeroButton"
+import TabBar from "./TabBar"
 
 export default function Hero() {
     return (
@@ -13,6 +14,7 @@ export default function Hero() {
             
             <div className="pl-5 pr-5 rounded-4xl h-150 w-200 shadow-2xl flex flex-col items-center justify-center bg-white gap-4">
                 <h1 className="font-poppins text-4xl font-bold ">Generate README</h1>
+                <TabBar />
                 <input className="bg-navbar rounded-3xl p-2 w-full max-w-lg text-center" type="text" placeholder="Paste your public repo https://github.com/username/repo"></input>
                 <HeroButton text="Generate README →" />
                 <span className="mt-4 mb-4 text-bold">or upload files directly</span>
