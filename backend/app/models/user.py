@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy.orm import relationship
-from datetime import datetime, timezone
+from datetime import datetime
 from app.db.session import Base
 
 class User(Base):
@@ -11,8 +11,8 @@ class User(Base):
     username = Column(String, unique=True, nullable=True, index=True)  # UK, nullable
     github_username = Column(String, unique=True, nullable=False, index=True)  # UK, not null
     github_token = Column(Text, nullable=True)  # nullable, encrypted (encryption handled by application layer)
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")

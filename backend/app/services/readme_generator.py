@@ -1,9 +1,14 @@
 from typing import Dict, Any
 import logging
 from datetime import datetime
+from uuid import UUID
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from app.config import settings
+from app.db.session import AsyncSessionLocal
+from app.models.generated_readme import GeneratedReadme, ReadmeStatus
+from app.services.github_service import fetch_repository_content
+from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
 
@@ -153,3 +158,78 @@ async def generate_readme_with_langchain(repo_data: Dict[str, Any]) -> str:
         
     except Exception as e:
         raise Exception(f"Error generating README with OpenAI: {str(e)}")
+
+
+async def process_readme_generation_async(readme_uuid: UUID, github_url: str):
+    """
+    Background task to process README generation asynchronously.
+    
+    This function:
+    1. Updates status to PROCESSING
+    2. Fetches repository content
+    3. Generates README with OpenAI
+    4. Updates database with COMPLETED status and content
+    5. On error: updates with FAILED status
+    
+    Args:
+        readme_uuid: UUID of the GeneratedReadme record
+        github_url: GitHub repository URL to process
+    """
+    async with AsyncSessionLocal() as db:
+        try:
+            # Fetch the GeneratedReadme record
+            result = await db.execute(
+                select(GeneratedReadme).where(GeneratedReadme.id == readme_uuid)
+            )
+            readme_record = result.scalar_one_or_none()
+            
+            if not readme_record:
+                logger.error(f"[Background Task] GeneratedReadme {readme_uuid} not found")
+                return
+            
+            # Update status to PROCESSING
+            readme_record.status = ReadmeStatus.PROCESSING.value
+            await db.commit()
+            logger.info(f"[Background Task] Started processing README {readme_uuid}")
+            
+            try:
+                # Fetch repository content
+                logger.info(f"[Background Task] Fetching repository content for {github_url}")
+                repo_data = await fetch_repository_content(github_url)
+                
+                # Generate README with OpenAI
+                logger.info(f"[Background Task] Generating README with AI for {readme_record.repo_name}")
+                readme_content = await generate_readme_with_langchain(repo_data)
+                
+                # Update record with COMPLETED status and content
+                readme_record.status = ReadmeStatus.COMPLETED.value
+                readme_record.readme_content = readme_content
+                await db.commit()
+                
+                logger.info(f"[Background Task] Successfully completed README generation {readme_uuid}")
+                
+            except Exception as e:
+                # Update with FAILED status
+                readme_record.status = ReadmeStatus.FAILED.value
+                error_message = str(e)
+                # Store error in readme_content for now (could add error_message field later)
+                readme_record.readme_content = f"Error generating README: {error_message}"
+                await db.commit()
+                
+                logger.error(f"[Background Task] Failed to generate README {readme_uuid}: {error_message}")
+                
+        except Exception as e:
+            logger.error(f"[Background Task] Unexpected error processing README {readme_uuid}: {str(e)}")
+            # Try to update status to FAILED if possible
+            try:
+                async with AsyncSessionLocal() as db2:
+                    result = await db2.execute(
+                        select(GeneratedReadme).where(GeneratedReadme.id == readme_uuid)
+                    )
+                    readme_record = result.scalar_one_or_none()
+                    if readme_record:
+                        readme_record.status = ReadmeStatus.FAILED.value
+                        readme_record.readme_content = f"Unexpected error: {str(e)}"
+                        await db2.commit()
+            except:
+                pass
