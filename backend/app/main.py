@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text  # ADD THIS IMPORT
 from app.db.session import get_db
+from app.routers import readme
 
 app = FastAPI(title="DocRelief AI")
 
@@ -15,6 +16,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(readme.router)
 
 @app.get("/")
 async def read_root():
