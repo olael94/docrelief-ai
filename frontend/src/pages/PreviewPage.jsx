@@ -2,50 +2,75 @@ import React, { useState } from 'react';
 import { Download, RefreshCw, Github, CheckCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { generateReadme, getReadme, pollReadmeStatus } from '../services/api';
+import Editor from '@monaco-editor/react';
 
 // EditorPanel Component with Line Numbers
-const EditorPanel = ({ content, onChange, disabled = false }) => {
-  const lines = content.split('\n');
-  const lineCount = lines.length;
-
-  const handleScroll = (e) => {
-    const lineNumbers = e.target.previousElementSibling;
-    if (lineNumbers) {
-      lineNumbers.scrollTop = e.target.scrollTop;
-    }
+// EditorPanel Component with Monaco Editor
+const EditorPanel = ({ content, onChange, disabled = false, onEditorMount, onScroll }) => {
+  const handleEditorChange = (value) => {
+    onChange(value || '');
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="bg-gray-100 px-6 py-4">
-        <h2 className="text-xl font-bold text-gray-900">Editor</h2>
-      </div>
-      <div className="flex-1 overflow-hidden flex">
-        {/* Line Numbers */}
-        <div className="overflow-y-auto bg-gray-50 px-3 py-6 text-right select-none border-r border-gray-200" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          <div className="font-mono text-sm text-gray-400 leading-6">
-            {Array.from({ length: lineCount }, (_, i) => (
-              <div key={i + 1}>{i + 1}</div>
-            ))}
-          </div>
+      <div className="h-full flex flex-col">
+        <div className="bg-gray-100 px-6 py-4">
+          <h2 className="text-xl font-bold text-gray-900">Editor</h2>
         </div>
-        {/* Editor Textarea */}
-        <textarea
-          value={content}
-          onChange={(e) => onChange(e.target.value)}
-          onScroll={handleScroll}
-          disabled={disabled}
-          className="flex-1 overflow-y-auto p-6 font-mono text-sm resize-none focus:outline-none disabled:bg-gray-50 disabled:text-gray-500 bg-white leading-6"
-          placeholder="# Your README content here..."
-          style={{ minHeight: '100%' }}
-        />
+        <div className="flex-1 overflow-hidden">
+          <Editor
+              height="100%"
+              defaultLanguage="markdown"
+              value={content}
+              onChange={handleEditorChange}
+              onMount={(editor) => {
+                if (onEditorMount) onEditorMount(editor);
+                if (onScroll) {
+                  editor.onDidScrollChange(onScroll);
+                }
+              }}
+              theme="vs-dark"
+              options={{
+                readOnly: disabled,
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                wrappingStrategy: 'advanced',
+                padding: { top: 16, bottom: 16 },
+                smoothScrolling: true,
+                cursorBlinking: 'smooth',
+                cursorSmoothCaretAnimation: 'on',
+                fontFamily: "'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace",
+                lineHeight: 24,
+                renderLineHighlight: 'all',
+                scrollbar: {
+                  vertical: 'auto',
+                  horizontal: 'auto',
+                  useShadows: false,
+                  verticalScrollbarSize: 10,
+                  horizontalScrollbarSize: 10,
+                  verticalSliderSize: 10,
+                  horizontalSliderSize: 10,
+                },
+              }}
+              loading={
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                    <p className="text-gray-500">Loading editor...</p>
+                  </div>
+                </div>
+              }
+          />
+        </div>
       </div>
-    </div>
   );
 };
 
 // PreviewPanel Component
-const PreviewPanel = ({ content, isLoading = false }) => {
+const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
   const components = {
     code: ({ inline, className, children, ...props }) => {
       const match = /language-(\w+)/.exec(className || '');
@@ -182,7 +207,7 @@ const PreviewPanel = ({ content, isLoading = false }) => {
       <div className="bg-gray-100 px-6 py-4">
         <h2 className="text-xl font-bold text-gray-900">Preview</h2>
       </div>
-      <div className="flex-1 overflow-y-auto bg-white px-6 py-4">
+      <div ref={previewRef} className="flex-1 overflow-y-auto bg-white px-6 py-4 preview-panel-scroll">
         <div className="max-w-none">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
@@ -198,28 +223,128 @@ const PreviewPanel = ({ content, isLoading = false }) => {
 
 // Main PreviewPage Component
 const PreviewPage = () => {
-  const [repoUrl, setRepoUrl] = useState('https://github.com/username/repo');
+  // Get readme_id from URL params (passed from Landing Page)
+  const params = new URLSearchParams(window.location.search);
+  const readmeId = params.get('id') || window.location.pathname.split('/').pop();
+
+  const [repoUrl, setRepoUrl] = useState('');
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
 
+  // Refs for editor and preview panels
+  const editorRef = React.useRef(null);
+  const previewRef = React.useRef(null);
+  const isScrollingRef = React.useRef(false);
+
+  // Load README on component mount
   React.useEffect(() => {
-    // Load initial mock content only if no repo URL is being loaded
-    const mockContent = `# Welcome to DocRelief AI
+    const loadReadme = async () => {
+      if (!readmeId || readmeId === 'preview') {
+        setError('No README ID provided');
+        setIsLoading(false);
+        return;
+      }
 
-Enter a GitHub repository URL above and click "Load" to generate a README.
+      try {
+        setIsLoading(true);
+        console.log('Loading README with ID:', readmeId);
 
-## How to use:
-1. Paste a GitHub repository URL (e.g., https://github.com/username/repo)
-2. Click the "Load" button
-3. Edit the generated README in the editor
-4. Download or commit to GitHub`;
-    
-    setContent(mockContent);
-    setIsLoading(false);
+        const readmeData = await getReadme(readmeId);
+        console.log('README loaded:', readmeData);
+
+        if (readmeData.status === 'completed') {
+          setContent(readmeData.readme_content || '');
+          setRepoUrl(readmeData.repo_url || '');
+          setShowSuccess(true);
+        } else if (readmeData.status === 'pending' || readmeData.status === 'processing') {
+          console.log('README still processing, polling...');
+          const completedData = await pollReadmeStatus(readmeId);
+          setContent(completedData.readme_content || '');
+          setRepoUrl(completedData.repo_url || '');
+          setShowSuccess(true);
+        } else if (readmeData.status === 'failed') {
+          throw new Error(readmeData.readme_content || 'README generation failed');
+        }
+
+      } catch (err) {
+        setError(err.message || 'Failed to load README');
+        console.error('Error loading README:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadReadme();
+  }, [readmeId]);
+
+
+  // Scroll sync functions
+  const handleEditorMount = React.useCallback((editor) => {
+    editorRef.current = editor;
   }, []);
+
+  const handleEditorScroll = React.useCallback((e) => {
+    if (isScrollingRef.current || !previewRef.current || !editorRef.current) return;
+
+    isScrollingRef.current = true;
+
+    try {
+      const editor = editorRef.current;
+      const preview = previewRef.current;
+
+      const scrollTop = e.scrollTop;
+      const scrollHeight = Math.max(1, e.scrollHeight - editor.getLayoutInfo().height);
+      const scrollPercentage = Math.min(1, Math.max(0, scrollTop / scrollHeight));
+
+      const previewScrollHeight = Math.max(1, preview.scrollHeight - preview.clientHeight);
+      preview.scrollTop = scrollPercentage * previewScrollHeight;
+    } catch (error) {
+      console.error('Editor scroll sync error:', error);
+    } finally {
+      setTimeout(() => {
+        isScrollingRef.current = false;
+      }, 50);
+    }
+  }, []);
+
+  const handlePreviewScroll = React.useCallback(() => {
+    if (isScrollingRef.current || !previewRef.current || !editorRef.current) return;
+
+    isScrollingRef.current = true;
+
+    try {
+      const editor = editorRef.current;
+      const preview = previewRef.current;
+
+      const scrollTop = preview.scrollTop;
+      const scrollHeight = Math.max(1, preview.scrollHeight - preview.clientHeight);
+      const scrollPercentage = Math.min(1, Math.max(0, scrollTop / scrollHeight));
+
+      const editorScrollHeight = Math.max(1, editor.getScrollHeight() - editor.getLayoutInfo().height);
+      editor.setScrollTop(scrollPercentage * editorScrollHeight);
+    } catch (error) {
+      console.error('Preview scroll sync error:', error);
+    } finally {
+      setTimeout(() => {
+        isScrollingRef.current = false;
+      }, 50);
+    }
+  }, []);
+
+// Attach preview scroll listener
+  React.useEffect(() => {
+    const preview = previewRef.current;
+    if (!preview) return;
+
+    preview.addEventListener('scroll', handlePreviewScroll);
+    return () => {
+      preview.removeEventListener('scroll', handlePreviewScroll);
+    };
+  }, [handlePreviewScroll, content, isLoading]);
+
 
   // Show error page if there's an error and no content
   if (error && !content) {
@@ -250,8 +375,34 @@ Enter a GitHub repository URL above and click "Load" to generate a README.
   }
 
   const handleRegenerate = async () => {
+    if (!repoUrl) {
+      setError('Repository URL not available');
+      return;
+    }
+
     setShowSuccess(false);
-    await handleLoadRepository();
+    setIsRegenerating(true);
+
+    try {
+      console.log('Regenerating README for:', repoUrl);
+
+      const { id: newReadmeId } = await generateReadme(repoUrl);
+      console.log('New generation started:', newReadmeId);
+
+      const readmeData = await pollReadmeStatus(newReadmeId);
+      console.log('Regeneration completed!', readmeData);
+
+      if (readmeData.readme_content) {
+        setContent(readmeData.readme_content);
+        setShowSuccess(true);
+      }
+
+    } catch (err) {
+      setError(err.message || 'Failed to regenerate README');
+      console.error('Error regenerating:', err);
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   const handleDownload = () => {
@@ -268,47 +419,8 @@ Enter a GitHub repository URL above and click "Load" to generate a README.
     alert('GitHub commit functionality will be implemented in a future version');
   };
 
-  const handleLoadRepository = async () => {
-    if (!repoUrl) {
-      setError('Please enter a repository URL');
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // Call the backend API
-      const response = await fetch('http://localhost:8000/api/readme/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          github_url: repoUrl
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate README');
-      }
-
-      const data = await response.json();
-      
-      // Assuming the API returns the markdown content
-      if (data.markdown || data.content) {
-        setContent(data.markdown || data.content);
-        setShowSuccess(true);
-      } else {
-        throw new Error('Invalid response from server');
-      }
-      
-    } catch (err) {
-      setError(err.message || 'Failed to load repository');
-      console.error('Error loading repository:', err);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleChangeRepository = () => {
+    window.location.href = '/';
   };
 
   return (
@@ -325,27 +437,17 @@ Enter a GitHub repository URL above and click "Load" to generate a README.
         </div>
       </header>
 
-      {/* Repository Info with Load Button */}
+      {/* Repository Info - Read Only */}
       <div className="flex items-center justify-center gap-3 mt-8 mb-6 px-6">
         <Github className="w-5 h-5 text-gray-700" />
-        <input
-          type="text"
-          value={repoUrl}
-          onChange={(e) => setRepoUrl(e.target.value)}
-          onKeyPress={(e) => {
-            if (e.key === 'Enter') {
-              handleLoadRepository();
-            }
-          }}
-          placeholder="https://github.com/username/repo"
-          className="flex-1 max-w-xl px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
+        <div className="flex-1 max-w-xl px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+          {repoUrl || 'Loading repository...'}
+        </div>
         <button
-          onClick={handleLoadRepository}
-          disabled={isLoading}
-          className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            onClick={handleChangeRepository}
+            className="px-6 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors"
         >
-          {isLoading ? 'Loading...' : 'Load'}
+          Change Repository
         </button>
       </div>
 
@@ -354,16 +456,22 @@ Enter a GitHub repository URL above and click "Load" to generate a README.
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
           {/* Editor Panel - independently scrollable */}
           <div className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col">
-            <EditorPanel 
-              content={content} 
-              onChange={setContent}
-              disabled={isLoading || isRegenerating}
+            <EditorPanel
+                content={content}
+                onChange={setContent}
+                disabled={isLoading || isRegenerating}
+                onEditorMount={handleEditorMount}
+                onScroll={handleEditorScroll}
             />
           </div>
 
           {/* Preview Panel - independently scrollable */}
           <div className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col">
-            <PreviewPanel content={content} isLoading={isLoading} />
+            <PreviewPanel
+                content={content}
+                isLoading={isLoading || isRegenerating}
+                previewRef={previewRef}
+            />
           </div>
         </div>
       </div>

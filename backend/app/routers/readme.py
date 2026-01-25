@@ -6,7 +6,8 @@ from uuid import UUID
 from app.schemas.readme import (
     GenerateReadmeRequest, 
     GenerateReadmeResponse,
-    DownloadReadmeResponse
+    DownloadReadmeResponse,
+    ReadmeDetailResponse # This is for JSON response of README details
 )
 from app.services.github_service import (
     validate_github_url,
@@ -128,6 +129,53 @@ async def generate_readme(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unexpected error: {str(e)}"
         )
+
+
+@router.get("/{readme_uuid}", response_model=ReadmeDetailResponse)
+async def get_readme(
+    readme_uuid: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Retrieves README details by UUID for preview.
+
+    Returns JSON with status and content (unlike download which returns a file).
+    Frontend can poll this endpoint to check generation status.
+
+    Args:
+        readme_uuid: UUID of the GeneratedReadme record
+        db: Database session
+
+    Returns:
+        ReadmeDetailResponse: README details including status and content
+
+    Raises:
+        HTTPException: If README not found
+    """
+    logger.info(f"[Get README] Request for README {readme_uuid}")
+
+    # Query database for GeneratedReadme by UUID
+    result = await db.execute(
+        select(GeneratedReadme).where(GeneratedReadme.id == readme_uuid)
+    )
+    readme_record = result.scalar_one_or_none()
+
+    if not readme_record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"README with ID {readme_uuid} not found"
+        )
+
+    # Return the record as JSON
+    return ReadmeDetailResponse(
+        id=readme_record.id,
+        status=str(readme_record.status),
+        readme_content=readme_record.readme_content,
+        repo_name=readme_record.repo_name,
+        repo_url=readme_record.repo_url,
+        created_at=readme_record.created_at,
+        updated_at=readme_record.updated_at
+    )
 
 
 @router.get("/download/{readme_uuid}")

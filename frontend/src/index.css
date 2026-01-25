@@ -143,6 +143,16 @@ pre code {
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 }
 
+/* Monaco Editor rounded scrollbar */
+.monaco-editor .scrollbar .slider {
+  border-radius: 5px !important;
+}
+
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider {
+  border-radius: 5px !important;
+}
+
+
 /* Enhanced hljs styling */
 .hljs {
   border-radius: 6px;
