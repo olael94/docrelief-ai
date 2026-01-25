@@ -1,6 +1,7 @@
 from pydantic import BaseModel, field_validator, HttpUrl
 from typing import Optional
 from uuid import UUID
+from datetime import datetime
 import re
 from app.models.generated_readme import ReadmeStatus
 
@@ -101,3 +102,16 @@ class DownloadReadmeResponse(BaseModel):
                 "readme_content": "# Project Name\n\n..."
             }
         }
+
+# Detailed response schema for a generated README JSON response
+class ReadmeDetailResponse(BaseModel):
+    id: UUID
+    status: str
+    readme_content: Optional[str] = None
+    repo_name: str
+    repo_url: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
