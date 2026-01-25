@@ -54,11 +54,11 @@ const PreviewPanel = ({ content, isLoading = false }) => {
       if (!inline && language) {
         return (
           <div className="relative my-4">
-            <div className="absolute top-2 right-2 px-2 py-1 text-xs bg-gray-700 text-white rounded">
+            <div className="absolute top-2 right-2 px-2 py-1 text-xs bg-gray-700 text-white rounded z-10">
               {language}
             </div>
-            <pre className="overflow-x-auto bg-gray-900 text-gray-100 rounded-lg p-4">
-              <code className={className} {...props}>
+            <pre className="overflow-x-auto bg-gray-900 rounded-lg p-4" style={{ backgroundColor: '#1a1a1a' }}>
+              <code className="font-mono text-sm" style={{ color: '#e5e7eb' }} {...props}>
                 {children}
               </code>
             </pre>
@@ -66,8 +66,18 @@ const PreviewPanel = ({ content, isLoading = false }) => {
         );
       }
       
+      if (!inline) {
+        return (
+          <pre className="overflow-x-auto bg-gray-900 rounded-lg p-4 my-4" style={{ backgroundColor: '#1a1a1a' }}>
+            <code className="font-mono text-sm" style={{ color: '#e5e7eb' }} {...props}>
+              {children}
+            </code>
+          </pre>
+        );
+      }
+      
       return (
-        <code className="bg-gray-100 text-red-600 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+        <code className="px-1.5 py-0.5 rounded text-sm font-mono" style={{ backgroundColor: '#f3f4f6', color: '#dc2626' }} {...props}>
           {children}
         </code>
       );
