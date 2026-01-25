@@ -101,13 +101,26 @@ def _fetch_repository_content_sync(github_url: str, repo_info: Optional[Dict] = 
     try:
         logger.debug(f"[GitHub] Accessing repository: {owner}/{repo_name}")
         repo = g.get_repo(f"{owner}/{repo_name}")
-        
+
+        # Fetch latest commit SHA
+        latest_commit_sha = None
+        try:
+            default_branch = repo.default_branch
+            logger.debug(f"[Commit] Default branch: {default_branch}")
+            latest_commit = repo.get_branch(default_branch).commit
+            latest_commit_sha = latest_commit.sha
+            logger.info(f"[Commit] Latest commit SHA: {latest_commit_sha[:7]}")
+        except Exception as e:
+            logger.warning(f"[Commit] Could not fetch commit SHA: {str(e)}")
+            latest_commit_sha = None
+
         # Use repo_info if provided (from is_repository_public), otherwise get from PyGithub
         if repo_info:
             result = {
                 "name": repo_info.get("name", repo.name),
                 "description": repo_info.get("description", "") or "",
                 "language": repo_info.get("language", "Unknown"),
+                "latest_commit_sha": latest_commit_sha, # Store latest commit SHA
                 "structure": [],
                 "config_files": {},
                 "main_files": {},
@@ -119,6 +132,7 @@ def _fetch_repository_content_sync(github_url: str, repo_info: Optional[Dict] = 
                 "name": repo.name,
                 "description": repo.description or "",
                 "language": repo.language or "Unknown",
+                "latest_commit_sha": latest_commit_sha, # Store latest commit SHA
                 "structure": [],
                 "config_files": {},
                 "main_files": {},
@@ -342,3 +356,50 @@ async def fetch_repository_content(github_url: str, repo_info: Optional[Dict] = 
     # Execute synchronous PyGithub function in separate thread
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _fetch_repository_content_sync, github_url, repo_info, max_files)
+
+async def detect_repo_changes(github_url: str, old_commit: str, new_commit: str) -> Dict:
+    """
+    Detects what changed between two commits using GitHub API.
+
+    Args:
+        github_url: GitHub repository URL
+        old_commit: Previous commit SHA
+        new_commit: New commit SHA
+
+    Returns:
+        Dict with changes information or None if comparison failed
+    """
+    try:
+        owner, repo_name = validate_github_url(github_url)
+
+        # Use GitHub API to compare commits
+        compare_url = f"https://api.github.com/repos/{owner}/{repo_name}/compare/{old_commit[:7]}...{new_commit[:7]}"
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(compare_url, timeout=10.0)
+
+            if response.status_code == 200:
+                data = response.json()
+
+                files_changed = data.get("files", [])
+                commits = data.get("commits", [])
+
+                # Extract meaningful change info
+                changes = {
+                    "files_changed_count": len(files_changed),
+                    "files_changed_names": [f["filename"] for f in files_changed[:10]],  # First 10 files
+                    "commits_count": len(commits),
+                    "additions": data.get("total_commits", 0),
+                    "deletions": data.get("deletions", 0),
+                    "commit_messages": [c.get("commit", {}).get("message", "").split("\n")[0] for c in commits[:5]]  # First 5 commit messages
+                }
+
+                logger.info(f"[Changes] Detected {changes['commits_count']} commits, {changes['files_changed_count']} files changed")
+                return changes
+            else:
+                logger.warning(f"[Changes] Could not compare commits: {response.status_code}")
+                return None
+
+    except Exception as e:
+        logger.error(f"[Changes] Error detecting changes: {str(e)}")
+        return None

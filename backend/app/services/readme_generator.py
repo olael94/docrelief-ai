@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional # Added Optional for cache
 import logging
 from datetime import datetime
 from uuid import UUID
@@ -7,13 +7,13 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from app.config import settings
 from app.db.session import AsyncSessionLocal
 from app.models.generated_readme import GeneratedReadme, ReadmeStatus
-from app.services.github_service import fetch_repository_content
+from app.services.github_service import fetch_repository_content, detect_repo_changes
 from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
 
 
-def create_readme_prompt(repo_data: Dict[str, Any]) -> str:
+def create_readme_prompt(repo_data: Dict[str, Any], changes: Optional[Dict] = None) -> str:  # Added changes param for cache
     """
     Creates a structured prompt to generate README based on repository data.
     
@@ -83,11 +83,42 @@ Use appropriate Markdown formatting. Be specific and practical in execution inst
 
 IMPORTANT: Focus especially on the "How to Run Locally" section - it must be clear, complete and follow best practices for the detected project type.
 """
+    # This section is for cache, if a readme had been generated before and there are changes then regenerate README with context
+    if changes:
+        change_context = f"""
+
+## Important Context: Recent Repository Changes
+
+This repository has been updated since the last analysis:
+- {changes['commits_count']} new commit(s) were added
+- {changes['files_changed_count']} file(s) were modified
+
+Recent commit messages:
+"""
+        for i, msg in enumerate(changes.get('commit_messages', []), 1):
+            change_context += f"{i}. {msg}\n"
+
+        change_context += f"\nFiles that changed:\n"
+        for filename in changes.get('files_changed_names', [])[:10]:
+            change_context += f"- {filename}\n"
+
+        change_context += """
+
+**Important:** Make sure the README accurately reflects these recent changes. For example:
+- If new dependencies were added, ensure they appear in the installation/prerequisites section
+- If new features were implemented, include them in the features section
+- If configuration changed, update the configuration section accordingly
+- If the project structure changed, reflect that in the structure explanation
+
+Do NOT create a separate "Recent Updates" section. Instead, naturally incorporate these changes throughout the appropriate sections of the README.
+"""
+
+        prompt += change_context
     
     return prompt
 
 
-async def generate_readme_with_langchain(repo_data: Dict[str, Any]) -> str:
+async def generate_readme_with_langchain(repo_data: Dict[str, Any], changes: Optional[Dict] = None) -> str:  # Added changes param for cache
     """
     Generates a README using LangChain and OpenAI based on repository data.
     
@@ -103,7 +134,7 @@ async def generate_readme_with_langchain(repo_data: Dict[str, Any]) -> str:
     try:
         # Create prompt
         logger.debug("[Prompt] Creating prompt for OpenAI...")
-        prompt_text = create_readme_prompt(repo_data)
+        prompt_text = create_readme_prompt(repo_data, changes)  # Pass changes
         prompt_tokens_estimate = len(prompt_text.split()) * 1.3  # Rough estimate
         logger.info(f"[Prompt] Prompt created - Estimated tokens: ~{int(prompt_tokens_estimate)}")
         logger.debug(f"   - Prompt length: {len(prompt_text)} characters")
@@ -193,21 +224,52 @@ async def process_readme_generation_async(readme_uuid: UUID, github_url: str):
             logger.info(f"[Background Task] Started processing README {readme_uuid}")
             
             try:
-                # Fetch repository content
+                # [] STEP 1: Fetch repository content
                 logger.info(f"[Background Task] Fetching repository content for {github_url}")
                 repo_data = await fetch_repository_content(github_url)
-                
-                # Generate README with OpenAI
+                current_commit_sha = repo_data.get("latest_commit_sha")
+
+                # [] STEP 2: Check for previous README generation
+                prev_result = await db.execute(
+                    select(GeneratedReadme)
+                    .where(
+                        GeneratedReadme.repo_url == github_url,
+                        GeneratedReadme.status == ReadmeStatus.COMPLETED.value,
+                        GeneratedReadme.commit_sha.isnot(None)
+                    )
+                    .order_by(GeneratedReadme.created_at.desc())
+                    .limit(1)
+                )
+                previous_readme = prev_result.scalar_one_or_none()
+
+                changes_detected = None
+
+                # [] STEP 3: Detect changes if previous generation exists
+                if previous_readme and current_commit_sha:
+                    if previous_readme.commit_sha == current_commit_sha:
+                        logger.info(f"[No Changes] Repo at same commit ({current_commit_sha[:7]}), generating fresh README")
+                    else:
+                        logger.info(f"[Changes Detected] Repo updated from {previous_readme.commit_sha[:7]} to {current_commit_sha[:7]}")
+                        changes_detected = await detect_repo_changes(
+                            github_url,
+                            previous_readme.commit_sha,
+                            current_commit_sha
+                        )
+                else:
+                    logger.info(f"[First Time] No previous generation found for this repo")
+
+                # [] STEP 4: Generate README (always fresh, include changes if detected)
                 logger.info(f"[Background Task] Generating README with AI for {readme_record.repo_name}")
-                readme_content = await generate_readme_with_langchain(repo_data)
-                
-                # Update record with COMPLETED status and content
+                readme_content = await generate_readme_with_langchain(repo_data, changes_detected)
+
+                # [] STEP 5: Update record with COMPLETED status, content, and commit SHA
                 readme_record.status = ReadmeStatus.COMPLETED.value
                 readme_record.readme_content = readme_content
+                readme_record.commit_sha = current_commit_sha
                 await db.commit()
-                
+
                 logger.info(f"[Background Task] Successfully completed README generation {readme_uuid}")
-                
+
             except Exception as e:
                 # Update with FAILED status
                 readme_record.status = ReadmeStatus.FAILED.value
