@@ -7,6 +7,13 @@ const api = axios.create({
     },
 });
 
+export const generateReadme = async (githubUrl) => {
+    const response = await api.post('/api/readme/generate', {
+        github_url: githubUrl
+    });
+    return response.data;
+};
+
 export const healthCheck = async () => {
     const response = await api.get('/health');
     return response.data;
