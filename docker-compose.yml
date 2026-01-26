@@ -4,11 +4,9 @@ services:
     image: postgres:17-alpine
     container_name: docrelief-postgres
     environment:
-      POSTGRES_USER: docrelief
-      POSTGRES_PASSWORD: docrelief123
-      POSTGRES_DB: docrelief
+      VITE_API_URL: http://localhost:8000
     ports:
-      - "5432:5432"
+      - "5173:5173"
     volumes:
       - postgres_data:/var/lib/postgresql/data
   backend:
@@ -42,3 +40,4 @@ services:
 
 volumes:
   postgres_data:
+

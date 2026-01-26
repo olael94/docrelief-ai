@@ -1,0 +1,61 @@
+-- 1. Create the custom ENUM type for input_method
+-- Modify the values inside the brackets based on your actual application needs
+CREATE TYPE input_method_enum AS ENUM ('url', 'manual', 'cli', 'upload');
+
+-- 2. Create the USERS table
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE,
+    username VARCHAR(255) UNIQUE,
+    github_username VARCHAR(255) NOT NULL UNIQUE,
+    github_token TEXT, -- Ideally this should be encrypted at the application level before insertion
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Create the SESSIONS table
+CREATE TABLE sessions (
+    id SERIAL PRIMARY KEY,
+    session_token VARCHAR(255) NOT NULL UNIQUE,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_active TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL
+);
+
+-- 4. Create the GENERATED_READMES table
+CREATE TABLE generated_readmes (
+    id SERIAL PRIMARY KEY,
+    session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    repo_name VARCHAR(255) NOT NULL,
+    repo_url TEXT,
+    input_method input_method_enum NOT NULL,
+    readme_content TEXT NOT NULL,
+    was_committed BOOLEAN DEFAULT FALSE,
+    was_downloaded BOOLEAN DEFAULT FALSE,
+    commit_url TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 5. Optional: Create a function and trigger to auto-update 'updated_at'
+-- This ensures the updated_at column actually changes when a row is modified.
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_users_modtime
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_updated_at_column();
+
+CREATE TRIGGER update_readmes_modtime
+    BEFORE UPDATE ON generated_readmes
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_updated_at_column();
