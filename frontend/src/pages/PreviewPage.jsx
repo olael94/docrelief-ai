@@ -240,46 +240,82 @@ const PreviewPage = () => {
   const isScrollingRef = React.useRef(false);
 
   // Load README on component mount
-  React.useEffect(() => {
-    const loadReadme = async () => {
-      if (!readmeId || readmeId === 'preview') {
-        setError('No README ID provided');
-        setIsLoading(false);
-        return;
+  // React.useEffect(() => {
+  //   const loadReadme = async () => {
+  //     if (!readmeId || readmeId === 'preview') {
+  //       setError('No README ID provided');
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     try {
+  //       setIsLoading(true);
+  //       console.log('Loading README with ID:', readmeId);
+
+  //       const readmeData = await getReadme(readmeId);
+  //       console.log('README loaded:', readmeData);
+
+  //       if (readmeData.status === 'completed') {
+  //         setContent(readmeData.readme_content || '');
+  //         setRepoUrl(readmeData.repo_url || '');
+  //         setShowSuccess(true);
+  //       } else if (readmeData.status === 'pending' || readmeData.status === 'processing') {
+  //         console.log('README still processing, polling...');
+  //         const completedData = await pollReadmeStatus(readmeId);
+  //         setContent(completedData.readme_content || '');
+  //         setRepoUrl(completedData.repo_url || '');
+  //         setShowSuccess(true);
+  //       } else if (readmeData.status === 'failed') {
+  //         throw new Error(readmeData.readme_content || 'README generation failed');
+  //       }
+
+  //     } catch (err) {
+  //       setError(err.message || 'Failed to load README');
+  //       console.error('Error loading README:', err);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+
+  //   loadReadme();
+  // }, [readmeId]);
+
+React.useEffect(() => {
+  const loadReadme = async () => {
+    // If no ID is found, just show an empty editor instead of an error
+    if (!readmeId || readmeId === 'preview') {
+      setContent('# New README\n\nStart typing here to see the preview...');
+      setRepoUrl('New Project');
+      setIsLoading(false);
+      return; 
+    }
+
+    try {
+      setIsLoading(true);
+      const readmeData = await getReadme(readmeId);
+
+      if (readmeData.status === 'completed') {
+        setContent(readmeData.readme_content || '');
+        setRepoUrl(readmeData.repo_url || '');
+        setShowSuccess(true);
+      } else if (readmeData.status === 'pending' || readmeData.status === 'processing') {
+        const completedData = await pollReadmeStatus(readmeId);
+        setContent(completedData.readme_content || '');
+        setRepoUrl(completedData.repo_url || '');
+        setShowSuccess(true);
       }
+    } catch (err) {
+      // Even if the API fails, let the user keep the editor open
+      console.error('Error loading README:', err);
+      setError('Could not fetch from server, but you can still edit locally.');
+      setIsLoading(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      try {
-        setIsLoading(true);
-        console.log('Loading README with ID:', readmeId);
-
-        const readmeData = await getReadme(readmeId);
-        console.log('README loaded:', readmeData);
-
-        if (readmeData.status === 'completed') {
-          setContent(readmeData.readme_content || '');
-          setRepoUrl(readmeData.repo_url || '');
-          setShowSuccess(true);
-        } else if (readmeData.status === 'pending' || readmeData.status === 'processing') {
-          console.log('README still processing, polling...');
-          const completedData = await pollReadmeStatus(readmeId);
-          setContent(completedData.readme_content || '');
-          setRepoUrl(completedData.repo_url || '');
-          setShowSuccess(true);
-        } else if (readmeData.status === 'failed') {
-          throw new Error(readmeData.readme_content || 'README generation failed');
-        }
-
-      } catch (err) {
-        setError(err.message || 'Failed to load README');
-        console.error('Error loading README:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadReadme();
-  }, [readmeId]);
-
+  loadReadme();
+}, [readmeId]);
 
   // Scroll sync functions
   const handleEditorMount = React.useCallback((editor) => {
