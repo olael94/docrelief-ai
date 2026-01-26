@@ -1,31 +1,41 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+// 1. Define the base URL clearly
+const API_BASE_URL = `http://${window.location.hostname}:8000`;
+
+const api = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
 
 // Health check
 export const healthCheck = async () => {
-    const response = await axios.get(`${API_BASE_URL.replace('/api', '')}/health`);
+    // Use the 'api' instance instead of 'axios'
+    const response = await api.get('/health');
     return response.data;
 };
 
-// Generate README (returns UUID and status)
+// Generate README
 export const generateReadme = async (githubUrl, sessionId = null) => {
-    const response = await axios.post(`${API_BASE_URL}/readme/generate`, {
+    // Using 'api' automatically prepends the baseURL
+    const response = await api.post('/readme/generate', {
         github_url: githubUrl,
         session_id: sessionId
     });
-    return response.data; // { id: uuid, status: "pending" }
+    return response.data;
 };
 
-// Get README details (for preview - returns JSON)
+// Get README details
 export const getReadme = async (readmeId) => {
-    const response = await axios.get(`${API_BASE_URL}/readme/${readmeId}`);
-    return response.data; // { id, status, readme_content, repo_name, ... }
+    const response = await api.get(`/readme/${readmeId}`);
+    return response.data;
 };
 
-// Download README (returns file)
+// Download README
 export const downloadReadme = async (readmeId) => {
-    const response = await axios.get(`${API_BASE_URL}/readme/download/${readmeId}`, {
+    const response = await api.get(`/readme/download/${readmeId}`, {
         responseType: 'blob'
     });
     return response.data;
@@ -37,14 +47,13 @@ export const pollReadmeStatus = async (readmeId, maxAttempts = 30, intervalMs = 
         const data = await getReadme(readmeId);
 
         if (data.status === 'completed') {
-            return data; // Success!
+            return data;
         } else if (data.status === 'failed') {
             throw new Error(data.readme_content || 'README generation failed');
         }
-
-        // Still pending/processing, wait and try again
         await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
-
     throw new Error('README generation timed out');
 };
+
+export default api;
