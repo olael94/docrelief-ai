@@ -544,7 +544,7 @@ React.useEffect(() => {
       <div className="flex-1 px-6 pb-6 overflow-hidden md:h-full">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:h-full">
           {/* Editor Panel - independently scrollable */}
-          <div className="bg-white rounded-3xl shadow-sm md:overflow-hidden flex flex-col min-h-[400px] max-h-[600px] md:h-full">
+          <div className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[600px] max-h-[600px] md:h-full">
             <EditorPanel
                 content={content}
                 onChange={setContent}
@@ -555,7 +555,7 @@ React.useEffect(() => {
           </div>
 
           {/* Preview Panel - independently scrollable */}
-          <div className="bg-white rounded-3xl shadow-sm md:overflow-hidden flex flex-col min-h-[400px] max-h-[600px] md:h-full">
+          <div className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[600px] max-h-[600px] md:h-full">
             <PreviewPanel
                 content={content}
                 isLoading={isLoading || isRegenerating}
