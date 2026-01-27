@@ -1,15 +1,35 @@
+
 services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: docrelief-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: docrelief123
+      POSTGRES_DB: docrelief
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command: >
+      postgres
+      -c listen_addresses='*'
+      -c max_connections=200
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d docrelief"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   backend:
+    depends_on:
+      postgres:
+        condition: service_healthy
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: docrelief-backend
     env_file:
-      - ./backend/.env
-    environment:
-      DATABASE_URL: postgresql+psycopg://docrelief:docrelief123@postgres:5432/docrelief
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-your_openai_key_here}
-      SECRET_KEY: ${SECRET_KEY:-your_secret_key_here}
+      - .env
     ports:
       - "8000:8000"
     volumes:
@@ -20,16 +40,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000
     container_name: docrelief-frontend
-    environment:
-      VITE_API_URL: http://localhost:8000
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "5173:80"
     depends_on:
       - backend
 
 volumes:
   postgres_data:
+
