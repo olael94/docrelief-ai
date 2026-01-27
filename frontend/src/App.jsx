@@ -1,24 +1,32 @@
-import { useState, useEffect } from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
+import PreviewPage from './pages/PreviewPage';
 import { healthCheck } from './services/api';
+import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 
 function App() {
-    const [status, setStatus] = useState('checking...');
+  const [status, setStatus] = useState('checking...');
+  const [showNav, setShowNav] = useState(false);
 
-    useEffect(() => {
-        const checkHealth = async () => {
-            try {
-                const data = await healthCheck();
-                setStatus(data.status);
-            } catch (error) {
-                setStatus('error');
-            }
-        };
-        checkHealth();
-    }, []);
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const data = await healthCheck();
+        setStatus(data.status);
+      } catch (error) {
+        setStatus('error');
+      }
+    };
+    checkHealth();
+  }, []);
 
-    return (
+  return (
+
+         <Routes>
+          <Route 
+            path="/" 
+            element={
         <>
         <Navbar />
         <Hero />
@@ -32,9 +40,15 @@ function App() {
                 </p>
             </div>
         </div>
+            } 
+          />
+          
+          <Route path="/preview" element={<PreviewPage />} />
+          <Route path="/preview/:id" element={<PreviewPage />} />
+        </Routes>
         </>
         
-    );
+  );
 }
 
 export default App;

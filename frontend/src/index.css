@@ -25,3 +25,166 @@ body {
 .btn-landing {
     background-color: #5FDA8A;
 }
+
+/* Additional styles for syntax highlighting */
+.hljs {
+  background: #f6f8fa !important;
+  color: #24292e;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #6a737d !important;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #d73a49 !important;
+  font-weight: 600;
+}
+
+.hljs-selector-class,
+.hljs-selector-attr {
+  color: #d73a49 !important;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: #005cc5 !important;
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: #032f62 !important;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #6f42c1 !important;
+  font-weight: bold;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #6f42c1 !important;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: #22863a !important;
+  font-weight: normal;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: #032f62 !important;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #005cc5 !important;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #e36209 !important;
+}
+
+.hljs-meta {
+  color: #6a737d !important;
+}
+
+/* Additional language-specific highlighting */
+.hljs-function {
+  color: #6f42c1 !important;
+}
+
+.hljs-params {
+  color: #24292e !important;
+}
+
+.hljs-property {
+  color: #005cc5 !important;
+}
+
+.hljs-punctuation {
+  color: #586069 !important;
+}
+
+.hljs-operator {
+  color: #d73a49 !important;
+}
+
+.hljs-deletion {
+  background: #ffeef0;
+}
+
+.hljs-addition {
+  background: #f0fff4;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+/* Code block specific styles */
+pre {
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  padding: 16px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  border: 1px solid #e1e4e8;
+}
+
+code {
+  background-color: rgba(175, 184, 193, 0.2);
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  border-radius: 3px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+  border: none;
+}
+
+/* Monaco editor adjustments */
+.monaco-editor {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+/* Monaco Editor rounded scrollbar */
+.monaco-editor .scrollbar .slider {
+  border-radius: 5px !important;
+}
+
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider {
+  border-radius: 5px !important;
+}
+
+
+/* Enhanced hljs styling */
+.hljs {
+  border-radius: 6px;
+  padding: 16px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  border: 1px solid #e1e4e8;
+}
