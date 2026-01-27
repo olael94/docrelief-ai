@@ -22,32 +22,30 @@ function App() {
   }, []);
 
   return (
-
-         <Routes>
-          <Route 
-            path="/" 
-            element={
-        <>
-        <Navbar />
-        <Hero />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="text-center">
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <>
+            <Navbar />
+            <Hero />
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+              <div className="text-center">
                 <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                    DocRelief AI
+                  DocRelief AI
                 </h1>
                 <p className="text-xl text-gray-600">
-                    Backend Status: <span className="font-semibold">{status}</span>
+                  Backend Status: <span className="font-semibold">{status}</span>
                 </p>
+              </div>
             </div>
-        </div>
-            } 
-          />
-          
-          <Route path="/preview" element={<PreviewPage />} />
-          <Route path="/preview/:id" element={<PreviewPage />} />
-        </Routes>
-        </>
-        
+          </>
+        }
+      />
+
+      <Route path="/preview" element={<PreviewPage />} />
+      <Route path="/preview/:id" element={<PreviewPage />} />
+    </Routes>
   );
 }
 
