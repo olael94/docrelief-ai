@@ -33,3 +33,5 @@ postgres_data/
 # Logs
 *.log
 npm-debug.log*
+
+.env
