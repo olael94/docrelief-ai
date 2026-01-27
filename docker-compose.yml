@@ -21,6 +21,9 @@ services:
       timeout: 5s
       retries: 5
   backend:
+    depends_on:
+    postgres:
+      condition: service_healthy
     build:
       context: ./backend
       dockerfile: Dockerfile
