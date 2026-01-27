@@ -181,6 +181,16 @@ async def generate_readme_with_langchain(repo_data: Dict[str, Any], changes: Opt
             if usage:
                 logger.info(f"[OpenAI] Token usage - Input: {usage.get('prompt_tokens', 'N/A')}, Output: {usage.get('completion_tokens', 'N/A')}, Total: {usage.get('total_tokens', 'N/A')}")
         
+        # Strip markdown code fences if present
+        readme_content = readme_content.strip()
+        if readme_content.startswith('```markdown'):
+            readme_content = readme_content[len('```markdown'):].strip()
+        if readme_content.startswith('```'):
+            readme_content = readme_content[3:].strip()
+        if readme_content.endswith('```'):
+            readme_content = readme_content[:-3].strip()
+
+
         # Ensure it starts with a title if it doesn't
         if not readme_content.strip().startswith('#'):
             readme_content = f"# {repo_data.get('name', 'Project')}\n\n{readme_content}"

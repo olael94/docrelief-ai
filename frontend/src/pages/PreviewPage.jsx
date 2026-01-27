@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Download, RefreshCw, Github, CheckCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { generateReadme, getReadme, pollReadmeStatus } from '../services/api';
+import { generateReadme, getReadme, pollReadmeStatus, updateReadmeDownloaded } from '../services/api';
 import Editor from '@monaco-editor/react';
+import toast, { Toaster } from 'react-hot-toast';
 
 // EditorPanel Component with Line Numbers
 // EditorPanel Component with Monaco Editor
@@ -82,8 +83,8 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
             <div className="absolute top-2 right-2 px-2 py-1 text-xs bg-gray-700 text-white rounded z-10">
               {language}
             </div>
-            <pre className="overflow-x-auto bg-gray-900 rounded-lg p-4" style={{ backgroundColor: '#1a1a1a' }}>
-              <code className="font-mono text-sm" style={{ color: '#e5e7eb' }} {...props}>
+            <pre className="overflow-x-auto bg-gray-900 rounded-lg p-4" style={{ backgroundColor: '#161b22' }}>
+              <code className="font-mono text-sm" style={{ color: '#c9d1d9' }} {...props}>
                 {children}
               </code>
             </pre>
@@ -93,8 +94,8 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
       
       if (!inline) {
         return (
-          <pre className="overflow-x-auto bg-gray-900 rounded-lg p-4 my-4" style={{ backgroundColor: '#1a1a1a' }}>
-            <code className="font-mono text-sm" style={{ color: '#e5e7eb' }} {...props}>
+          <pre className="overflow-x-auto bg-gray-900 rounded-lg p-4 my-4" style={{ backgroundColor: '#161b22' }}>
+            <code className="font-mono text-sm" style={{ color: '#c9d1d9' }} {...props}>
               {children}
             </code>
           </pre>
@@ -225,7 +226,10 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
 const PreviewPage = () => {
   // Get readme_id from URL params (passed from Landing Page)
   const params = new URLSearchParams(window.location.search);
-  const readmeId = params.get('id') || window.location.pathname.split('/').pop();
+  // This will either be the readme ID or 'preview' for local editing
+  const [readmeId, setReadmeId] = useState(
+      params.get('id') || window.location.pathname.split('/').pop()
+  );
 
   const [repoUrl, setRepoUrl] = useState('');
   const [content, setContent] = useState('');
@@ -431,6 +435,8 @@ React.useEffect(() => {
       if (readmeData.readme_content) {
         setContent(readmeData.readme_content);
         setShowSuccess(true);
+        // UPDATE: Set the new readme ID so downloads track the right record
+        setReadmeId(newReadmeId);
       }
 
     } catch (err) {
@@ -441,14 +447,59 @@ React.useEffect(() => {
     }
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([content], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'README.md';
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleDownload = async () => {
+    try {
+      console.log('=== DOWNLOAD DEBUG ===');
+      console.log('Current readmeId:', readmeId);
+      console.log('readmeId type:', typeof readmeId);
+
+      // Extract repo name from URL for dynamic filename
+      let filename = 'README.md'; // default
+
+      if (repoUrl) {
+        try {
+          // Extract repo name from GitHub URL
+          // Format: https://github.com/username/repo-name
+          const urlParts = repoUrl.split('/');
+          const repoName = urlParts[urlParts.length - 1]; // Get last part
+
+          if (repoName && repoName.trim() !== '') {
+            filename = `${repoName}-README.md`;
+          }
+        } catch (error) {
+          console.error('Error extracting repo name:', error);
+          // Fall back to default filename
+        }
+      }
+
+      const blob = new Blob([content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      // Show success toast
+      toast.success('README download started!', {
+        duration: 5000,
+      });
+
+      // Update database tracking (silent fail - don't block user)
+      if (readmeId && readmeId !== 'preview') {
+        console.log('Calling updateReadmeDownloaded with ID:', readmeId);
+        const result = await updateReadmeDownloaded(readmeId);
+        console.log('Update result:', result);
+      } else {
+        console.log('Skipping database update - readmeId:', readmeId);
+      }
+    } catch (error) {
+      // Show error toast
+      console.error('Download failed:', error);
+      toast.error('Download failed. Please try again.', {
+        duration: 5000,
+      });
+    }
   };
 
   const handleCommit = () => {
@@ -460,7 +511,9 @@ React.useEffect(() => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen md:h-screen flex flex-col bg-gray-50">
+      {/* Toast Container */}
+      <Toaster position="top-right" />
       {/* Header */}
       <header className="bg-gray-200 rounded-full mx-6 mt-6 px-8 py-6">
         <div className="flex items-center justify-between">
@@ -488,10 +541,10 @@ React.useEffect(() => {
       </div>
 
       {/* Split Screen Editor - with independent scrolling */}
-      <div className="flex-1 px-6 pb-6 overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+      <div className="flex-1 px-6 pb-6 overflow-hidden md:h-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:h-full">
           {/* Editor Panel - independently scrollable */}
-          <div className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col">
+          <div className="bg-white rounded-3xl shadow-sm md:overflow-hidden flex flex-col min-h-[400px] max-h-[600px] md:h-full">
             <EditorPanel
                 content={content}
                 onChange={setContent}
@@ -502,7 +555,7 @@ React.useEffect(() => {
           </div>
 
           {/* Preview Panel - independently scrollable */}
-          <div className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col">
+          <div className="bg-white rounded-3xl shadow-sm md:overflow-hidden flex flex-col min-h-[400px] max-h-[600px] md:h-full">
             <PreviewPanel
                 content={content}
                 isLoading={isLoading || isRegenerating}
@@ -515,41 +568,46 @@ React.useEffect(() => {
       {/* Action Bar */}
       <div className="flex items-center justify-center pb-8">
         <div className="bg-white rounded-2xl shadow-lg px-8 py-6 flex items-center gap-6">
-          {/* Success Message */}
-          {showSuccess && (
-            <div className="flex items-center gap-2 text-green-500">
-              <CheckCircle className="w-5 h-5" />
-              <div className="text-sm font-medium leading-tight">
-                README<br />generated<br />successfully
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            {/* Success Message */}
+            {showSuccess && (
+              <div className="flex items-center gap-2 text-green-500">
+                <CheckCircle className="w-5 h-5" />
+                <div className="text-sm font-medium leading-tight">
+                  README<br />generated<br />successfully
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Action Buttons */}
-          <button
-            onClick={handleRegenerate}
-            disabled={isRegenerating}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <RefreshCw className={`w-5 h-5 ${isRegenerating ? 'animate-spin' : ''}`} />
-            Regenerate
-          </button>
+            {/* Action Buttons */}
+            {/* Regenerate Button*/}
+            <button
+              onClick={handleRegenerate}
+              disabled={isRegenerating}
+              className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className={`w-5 h-5 ${isRegenerating ? 'animate-spin' : ''}`} />
+              Regenerate
+            </button>
 
-          <button
-            onClick={handleDownload}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors"
-          >
-            <Download className="w-5 h-5" />
-            Download
-          </button>
+            {/* Download Button*/}
+            <button
+              onClick={handleDownload}
+              className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors"
+            >
+              <Download className="w-5 h-5" />
+              Download
+            </button>
 
-          <button
-            onClick={handleCommit}
-            className="flex items-center gap-2 px-6 py-3 bg-black text-white hover:bg-gray-800 rounded-lg font-medium transition-colors"
-          >
-            <Github className="w-5 h-5" />
-            Commit
-          </button>
+            {/* Commit Button*/}
+            <button
+              onClick={handleCommit}
+              className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-black text-white hover:bg-gray-800 rounded-lg font-medium transition-colors"
+            >
+              <Github className="w-5 h-5" />
+              Commit
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -177,7 +177,7 @@ async def get_readme(
         updated_at=readme_record.updated_at
     )
 
-
+# GET
 @router.get("/download/{readme_uuid}")
 async def download_readme(
     readme_uuid: UUID,
@@ -282,3 +282,44 @@ async def download_readme(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unknown status: {readme_record.status}"
         )
+
+# PATCH to update was_downloaded flag whn README is downloaded
+@router.patch("/{readme_uuid}")
+async def update_readme(
+    readme_uuid: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Updates the was_downloaded flag for a README.
+
+    Args:
+        readme_uuid: UUID of the GeneratedReadme record
+        db: Database session
+
+    Returns:
+        Success message
+
+    Raises:
+        HTTPException: If README not found
+    """
+    logger.info(f"[Update README] Updating was_downloaded flag for {readme_uuid}")
+
+    # Query database for GeneratedReadme by UUID
+    result = await db.execute(
+        select(GeneratedReadme).where(GeneratedReadme.id == readme_uuid)
+    )
+    readme_record = result.scalar_one_or_none()
+
+    if not readme_record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"README with ID {readme_uuid} not found"
+        )
+
+    # Update was_downloaded flag
+    readme_record.was_downloaded = True
+    await db.commit()
+
+    logger.info(f"[Update README] Successfully updated was_downloaded for {readme_uuid}")
+
+    return {"message": "README marked as downloaded", "id": str(readme_uuid)}

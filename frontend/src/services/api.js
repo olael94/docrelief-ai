@@ -20,7 +20,7 @@ export const healthCheck = async () => {
 // Generate README
 export const generateReadme = async (githubUrl, sessionId = null) => {
     // Using 'api' automatically prepends the baseURL
-    const response = await api.post('/readme/generate', {
+    const response = await api.post('/api/readme/generate', {
         github_url: githubUrl,
         session_id: sessionId
     });
@@ -29,13 +29,13 @@ export const generateReadme = async (githubUrl, sessionId = null) => {
 
 // Get README details
 export const getReadme = async (readmeId) => {
-    const response = await api.get(`/readme/${readmeId}`);
+    const response = await api.get(`/api/readme/${readmeId}`);
     return response.data;
 };
 
 // Download README
 export const downloadReadme = async (readmeId) => {
-    const response = await api.get(`/readme/download/${readmeId}`, {
+    const response = await api.get(`/api/readme/download/${readmeId}`, {
         responseType: 'blob'
     });
     return response.data;
@@ -54,6 +54,18 @@ export const pollReadmeStatus = async (readmeId, maxAttempts = 30, intervalMs = 
         await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
     throw new Error('README generation timed out');
+};
+
+// Update README was_downloaded flag
+export const updateReadmeDownloaded = async (readmeId) => {
+    try {
+        const response = await api.patch(`/api/readme/${readmeId}`);
+        return response.data;
+    } catch (error) {
+        // Silently fail - don't block user download
+        console.error('Failed to update download tracking:', error);
+        return null;
+    }
 };
 
 export default api;
