@@ -17,6 +17,9 @@ COPY app/ ./app/
 COPY alembic/ ./alembic/
 COPY alembic.ini .
 
+# Copy .env file if it exists (for Alembic to read settings)
+COPY .env* ./
+
 
 
 # Expose port
