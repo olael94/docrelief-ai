@@ -23,36 +23,80 @@ def validate_github_url(github_url: str) -> Tuple[str, str]:
     Raises:
         ValueError: If the URL is not valid
     """
-    # Remove trailing slash and .git suffix if present
+    # Log input URL
+    logger.info(f"[URL Validation] Input URL: '{github_url}' (length: {len(github_url)})")
+    
+    # Remove trailing slash and .git if present
+    # IMPORTANT: Use endswith() and slicing, not rstrip() which removes individual characters!
     url = github_url.strip().rstrip('/')
     if url.endswith('.git'):
-        url = url[:-4]
+        url = url[:-4]  # Remove '.git' from the end
+    logger.debug(f"[URL Validation] Cleaned URL: '{url}' (length: {len(url)})")
     
-    # Pattern to extract owner/repo
-    # \w matches [a-zA-Z0-9_], also allow . and -
-    pattern = r'github\.com[/:]([a-zA-Z0-9_.-]+)/([a-zA-Z0-9_.-]+)'
-    match = re.search(pattern, url, re.IGNORECASE)
-    
-    if not match:
+    # Use a more robust approach: split by 'github.com/' and then by '/'
+    # This avoids regex issues with special characters
+    if 'github.com/' not in url.lower() and 'github.com:' not in url.lower():
+        logger.error(f"[URL Validation] Invalid GitHub URL format: {github_url}")
         raise ValueError(f"Invalid GitHub URL: {github_url}")
     
-    owner = match.group(1)
-    repo_name = match.group(2)
+    # Extract the part after github.com/
+    if 'github.com/' in url.lower():
+        parts_after_github = url.lower().split('github.com/')[1]
+    else:
+        parts_after_github = url.lower().split('github.com:')[1]
+    
+    # Split by '/' to get owner and repo
+    path_parts = parts_after_github.split('/')
+    
+    if len(path_parts) < 2:
+        logger.error(f"[URL Validation] Could not extract owner/repo from: {github_url}")
+        raise ValueError(f"Invalid GitHub URL: {github_url}")
+    
+    # Get owner and repo from the original URL (preserve case)
+    if 'github.com/' in url:
+        original_parts = url.split('github.com/')[1].split('/')
+    else:
+        original_parts = url.split('github.com:')[1].split('/')
+    
+    owner = original_parts[0]
+    repo_name = '/'.join(original_parts[1:])  # Join in case repo name has slashes (shouldn't, but safe)
+    
+    # Remove any trailing .git
+    if repo_name.endswith('.git'):
+        repo_name = repo_name[:-4]
+    
+    # Log extracted values for debugging with full details
+    logger.info(f"[URL Validation] Extracted owner: '{owner}' (length: {len(owner)}), repo: '{repo_name}' (length: {len(repo_name)})")
+    logger.info(f"[URL Validation] Full extraction - owner='{owner}', repo='{repo_name}'")
+    
+    # Validate that we got something
+    if not owner or not repo_name:
+        logger.error(f"[URL Validation] Empty extraction - owner: '{owner}', repo: '{repo_name}'")
+        raise ValueError(f"Could not extract owner/repo from URL: {github_url}")
+    
+    # Validate characters (GitHub allows alphanumeric, hyphens, underscores, dots)
+    import string
+    allowed_chars = string.ascii_letters + string.digits + '._-'
+    if not all(c in allowed_chars for c in owner) or not all(c in allowed_chars for c in repo_name):
+        logger.warning(f"[URL Validation] Owner or repo contains invalid characters - owner: '{owner}', repo: '{repo_name}'")
+        # Still allow it, but log a warning
     
     return owner, repo_name
 
 
-async def is_repository_public(github_url: str) -> Tuple[bool, Optional[Dict]]:
+async def is_repository_accessible(github_url: str, github_api_key: Optional[str] = None) -> Tuple[bool, Optional[Dict], bool]:
     """
-    Checks if a GitHub repository is public and returns repository data.
+    Checks if a GitHub repository is accessible (public or private with auth) and returns repository data.
     
     Args:
         github_url: GitHub repository URL
+        github_api_key: Optional GitHub API token for accessing private repositories
         
     Returns:
-        Tuple[bool, Optional[Dict]]: (is_public, repo_data)
-        - is_public: True if the repository is public, False otherwise
-        - repo_data: Repository data from API if public, None otherwise
+        Tuple[bool, Optional[Dict], bool]: (is_accessible, repo_data, is_public)
+        - is_accessible: True if the repository is accessible (public or private with valid auth)
+        - repo_data: Repository data from API if accessible, None otherwise
+        - is_public: True if the repository is public, False if private
         
     Raises:
         ValueError: If the URL is not valid
@@ -60,37 +104,89 @@ async def is_repository_public(github_url: str) -> Tuple[bool, Optional[Dict]]:
     """
     owner, repo_name = validate_github_url(github_url)
     
+    # Log extracted values to verify they're correct
+    logger.info(f"[GitHub Auth] Extracted - Owner: '{owner}' (length: {len(owner)}), Repo: '{repo_name}' (length: {len(repo_name)})")
+    
     # Use httpx to make request with optional authentication
-    # If returns 200, it's public. If 404/403, it's private or doesn't exist
     api_url = f"https://api.github.com/repos/{owner}/{repo_name}"
     
-    # Add auth header if token is available
+    # Log the full API URL to verify it's correct
+    logger.info(f"[GitHub Auth] API URL: {api_url}")
+    
+    # Prepare headers
     headers = {}
-    if settings.GITHUB_TOKEN:
-        headers["Authorization"] = f"token {settings.GITHUB_TOKEN}"
+    if github_api_key:
+        headers["Authorization"] = f"token {github_api_key}"
+        logger.info(f"[GitHub Auth] Using API key for authentication (key length: {len(github_api_key)})")
     
     async with httpx.AsyncClient() as client:
         try:
+            logger.info(f"[GitHub Auth] Making request to: {api_url}")
+            logger.info(f"[GitHub Auth] Headers: {'With Authorization' if github_api_key else 'No Authorization'}")
             response = await client.get(api_url, headers=headers, timeout=10.0)
+            
+            logger.debug(f"[GitHub Auth] Response status: {response.status_code}")
             
             if response.status_code == 200:
                 repo_data = response.json()
                 is_public = repo_data.get("private", True) == False
-                return is_public, repo_data if is_public else None
+                logger.info(f"[GitHub Auth] Repository {owner}/{repo_name} is {'PUBLIC' if is_public else 'PRIVATE'} and accessible")
+                return True, repo_data, is_public
             elif response.status_code == 404:
-                # Repository not found (may be private or doesn't exist)
-                raise ValueError(f"Repository not found: {owner}/{repo_name}")
+                # Repository not found or doesn't exist
+                # Note: GitHub may return 404 for private repos even with invalid API key (security)
+                logger.warning(f"[GitHub Auth] 404 response for {owner}/{repo_name}")
+                logger.warning(f"[GitHub Auth] Full owner: '{owner}', Full repo: '{repo_name}'")
+                error_msg = f"Repository not found: {owner}/{repo_name}"
+                if github_api_key:
+                    error_msg += ". The repository may not exist, or the API key may be invalid or lack access permissions."
+                logger.warning(f"[GitHub Auth] Error message: {error_msg}")
+                raise ValueError(error_msg)
             elif response.status_code == 403:
                 # Rate limit or access denied
-                raise Exception("Access denied to GitHub API. May be rate limit or private repository.")
+                error_body = response.text[:200] if response.text else "No error details"
+                logger.warning(f"[GitHub Auth] 403 response: {error_body}")
+                if github_api_key:
+                    raise Exception("Access denied. The provided GitHub API key may be invalid or lack permissions. Check if the token has 'repo' scope for private repositories.")
+                else:
+                    raise Exception("Access denied to GitHub API. Repository may be private - provide a GitHub API key to access private repositories.")
+            elif response.status_code == 401:
+                # Unauthorized - invalid token
+                error_body = response.text[:200] if response.text else "No error details"
+                logger.warning(f"[GitHub Auth] 401 response: {error_body}")
+                raise Exception("Invalid GitHub API key. Please check your token. Make sure it's a valid personal access token with 'repo' scope.")
             else:
-                raise Exception(f"Error accessing repository: {response.status_code}")
+                error_body = response.text[:200] if response.text else "No error details"
+                logger.error(f"[GitHub Auth] Unexpected status {response.status_code}: {error_body}")
+                raise Exception(f"Error accessing repository: {response.status_code} - {error_body}")
                 
         except httpx.HTTPError as e:
+            logger.error(f"[GitHub Auth] HTTP error: {str(e)}")
             raise Exception(f"Connection error with GitHub: {str(e)}")
+        except ValueError:
+            # Re-raise ValueError as-is
+            raise
+        except Exception as e:
+            logger.error(f"[GitHub Auth] Unexpected error: {str(e)}")
+            raise
 
 
-def _fetch_repository_content_sync(github_url: str, repo_info: Optional[Dict] = None, max_files: int = 50) -> Dict[str, any]:
+async def is_repository_public(github_url: str) -> Tuple[bool, Optional[Dict]]:
+    """
+    Checks if a GitHub repository is public and returns repository data.
+    Maintains backward compatibility.
+    
+    Args:
+        github_url: GitHub repository URL
+        
+    Returns:
+        Tuple[bool, Optional[Dict]]: (is_public, repo_data)
+    """
+    is_accessible, repo_data, is_public = await is_repository_accessible(github_url)
+    return is_public, repo_data if is_public else None
+
+
+def _fetch_repository_content_sync(github_url: str, repo_info: Optional[Dict] = None, max_files: int = 50, github_api_key: Optional[str] = None) -> Dict[str, any]:
     """
     Synchronous helper function to fetch repository content using PyGithub.
     Will be executed in a separate thread.
@@ -100,16 +196,17 @@ def _fetch_repository_content_sync(github_url: str, repo_info: Optional[Dict] = 
         github_url: GitHub repository URL
         repo_info: Optional repository info from previous API call (to avoid duplicate request)
         max_files: Maximum number of files to read
+        github_api_key: Optional GitHub API token for accessing private repositories
     """
     owner, repo_name = validate_github_url(github_url)
     
-    # Use PyGithub with optional token for higher rate limits
-    if settings.GITHUB_TOKEN:
-        g = Github(settings.GITHUB_TOKEN)
-        logger.debug("[GitHub] Using authenticated requests (higher rate limit)")
+    # Use PyGithub - simpler API, even though it uses urllib3 internally
+    # Use API key if provided for private repos
+    if github_api_key:
+        logger.debug(f"[GitHub] Using API key for authentication")
+        g = Github(github_api_key)
     else:
         g = Github()
-        logger.debug("[GitHub] Using unauthenticated requests (60 req/hour limit)")
     
     try:
         logger.debug(f"[GitHub] Accessing repository: {owner}/{repo_name}")
@@ -344,7 +441,7 @@ def _fetch_repository_content_sync(github_url: str, repo_info: Optional[Dict] = 
         raise Exception(f"Unexpected error fetching repository content: {str(e)}")
 
 
-async def fetch_repository_content(github_url: str, repo_info: Optional[Dict] = None, max_files: int = 50) -> Dict[str, any]:
+async def fetch_repository_content(github_url: str, repo_info: Optional[Dict] = None, max_files: int = 50, github_api_key: Optional[str] = None) -> Dict[str, any]:
     """
     Fetches GitHub repository content, including source code and configuration files.
     Uses PyGithub for simplicity (executed in thread pool since PyGithub is synchronous).
@@ -353,6 +450,7 @@ async def fetch_repository_content(github_url: str, repo_info: Optional[Dict] = 
         github_url: GitHub repository URL
         repo_info: Optional repository info from previous API call (to avoid duplicate request)
         max_files: Maximum number of files to read (to avoid exceeding tokens)
+        github_api_key: Optional GitHub API token for accessing private repositories
         
     Returns:
         Dict containing:
@@ -368,9 +466,9 @@ async def fetch_repository_content(github_url: str, repo_info: Optional[Dict] = 
     """
     # Execute synchronous PyGithub function in separate thread
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, _fetch_repository_content_sync, github_url, repo_info, max_files)
+    return await loop.run_in_executor(None, _fetch_repository_content_sync, github_url, repo_info, max_files, github_api_key)
 
-async def detect_repo_changes(github_url: str, old_commit: str, new_commit: str) -> Dict:
+async def detect_repo_changes(github_url: str, old_commit: str, new_commit: str, github_api_key: Optional[str] = None) -> Dict:
     """
     Detects what changed between two commits using GitHub API.
 
@@ -378,6 +476,7 @@ async def detect_repo_changes(github_url: str, old_commit: str, new_commit: str)
         github_url: GitHub repository URL
         old_commit: Previous commit SHA
         new_commit: New commit SHA
+        github_api_key: Optional GitHub API token for accessing private repositories
 
     Returns:
         Dict with changes information or None if comparison failed
@@ -388,8 +487,13 @@ async def detect_repo_changes(github_url: str, old_commit: str, new_commit: str)
         # Use GitHub API to compare commits
         compare_url = f"https://api.github.com/repos/{owner}/{repo_name}/compare/{old_commit[:7]}...{new_commit[:7]}"
 
+        # Prepare headers
+        headers = {}
+        if github_api_key:
+            headers["Authorization"] = f"token {github_api_key}"
+
         async with httpx.AsyncClient() as client:
-            response = await client.get(compare_url, timeout=10.0)
+            response = await client.get(compare_url, headers=headers, timeout=10.0)
 
             if response.status_code == 200:
                 data = response.json()

@@ -11,7 +11,8 @@ from app.schemas.readme import (
 )
 from app.services.github_service import (
     validate_github_url,
-    is_repository_public
+    is_repository_public,
+    is_repository_accessible
 )
 from app.services.readme_generator import process_readme_generation_async
 from app.services.session_service import get_or_create_anonymous_session
@@ -34,13 +35,13 @@ async def generate_readme(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Initiates asynchronous README generation for a public GitHub repository.
+    Initiates asynchronous README generation for a GitHub repository (public or private with API key).
     
-    Receives a GitHub URL, verifies if the repository is public,
+    Receives a GitHub URL, verifies if the repository is accessible,
     creates a database record and returns an ID for status checking.
     
     Args:
-        request: Object with the GitHub URL and optional session_id
+        request: Object with the GitHub URL, optional session_id, and optional github_api_key
         db: Database session
         
     Returns:
@@ -50,40 +51,78 @@ async def generate_readme(
         HTTPException: In case of validation, access or processing errors
     """
     github_url = request.github_url
+    github_api_key = request.github_api_key
     
-    logger.info(f"[README Generation] Starting async request for: {github_url}")
+    # Log the raw input to see if it's being truncated - USE ERROR LEVEL TO ENSURE IT SHOWS
+    logger.error(f"===== [DEBUG] README Generation Starting =====")
+    logger.error(f"[DEBUG] Raw github_url from request: '{github_url}'")
+    logger.error(f"[DEBUG] github_url length: {len(github_url)}")
+    logger.error(f"[DEBUG] github_url repr: {repr(github_url)}")
+    logger.error(f"[DEBUG] github_api_key provided: {bool(github_api_key)}")
+    
+    # Also log at info level
+    logger.info(f"[README Generation] ===== Starting request =====")
+    logger.info(f"[README Generation] Raw github_url: '{github_url}' (length: {len(github_url)})")
+    logger.info(f"[README Generation] Raw github_api_key: {'Provided' if github_api_key else 'Not provided'} (length: {len(github_api_key) if github_api_key else 0})")
+    
+    if github_api_key:
+        logger.info(f"[README Generation] GitHub API key provided (for private repo access)")
     
     try:
         # 1. Validate URL
         try:
             owner, repo_name = validate_github_url(github_url)
-            logger.debug(f"[URL Validation] Valid URL - Owner: {owner}, Repo: {repo_name}")
+            logger.info(f"[URL Validation] Valid URL - Owner: '{owner}' (len={len(owner)}), Repo: '{repo_name}' (len={len(repo_name)})")
+            logger.info(f"[URL Validation] Full extracted: {owner}/{repo_name}")
         except ValueError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=str(e)
             )
         
-        # 2. Check if repository is public
+        # 2. Check if repository is accessible (public or private with auth)
         try:
-            logger.debug(f"[Public Check] Checking if {owner}/{repo_name} is public...")
-            is_public, _ = await is_repository_public(github_url)
-            logger.info(f"[Public Check] Repository {owner}/{repo_name} is {'PUBLIC' if is_public else 'PRIVATE'}")
-            if not is_public:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Repository {owner}/{repo_name} is private. Only public repositories are supported."
-                )
+            logger.info(f"[Access Check] Checking if {owner}/{repo_name} is accessible...")
+            if github_api_key:
+                logger.info(f"[Access Check] Using GitHub API key for authentication")
+            is_accessible, repo_data, is_public = await is_repository_accessible(github_url, github_api_key)
+            logger.info(f"[Access Check] Repository {owner}/{repo_name} is {'PUBLIC' if is_public else 'PRIVATE'} and accessible")
+            if not is_accessible:
+                if github_api_key:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"Repository {owner}/{repo_name} is not accessible. The provided GitHub API key may be invalid or lack permissions."
+                    )
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"Repository {owner}/{repo_name} is private. Provide a GitHub API key to access private repositories."
+                    )
         except ValueError as e:
+            logger.error(f"[Access Check] ValueError: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=str(e)
             )
         except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Error verifying repository: {str(e)}"
-            )
+            logger.error(f"[Access Check] Exception: {str(e)}")
+            error_msg = str(e)
+            # Check error type to return appropriate status code
+            if "401" in error_msg or "Invalid" in error_msg or "invalid" in error_msg.lower():
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=error_msg
+                )
+            elif "403" in error_msg or "Access denied" in error_msg or "permissions" in error_msg.lower():
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=error_msg
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=f"Error verifying repository: {error_msg}"
+                )
         
         # 3. Get or create session
         session = await get_or_create_anonymous_session(db, request.session_id)
@@ -107,8 +146,8 @@ async def generate_readme(
         
         logger.info(f"[README Generation] Created record {readme_record.id} with PENDING status")
         
-        # 5. Start background task
-        asyncio.create_task(process_readme_generation_async(readme_record.id, github_url))
+        # 5. Start background task (pass API key if provided)
+        asyncio.create_task(process_readme_generation_async(readme_record.id, github_url, github_api_key))
         logger.info(f"[README Generation] Started background task for {readme_record.id}")
         
         # 6. Return UUID and status immediately
