@@ -2,7 +2,7 @@ name: Build and Push Backend/Frontend Images
 on:
   push:
     branches:
-      - feature*
+      - feature/*
 
 env:
   REGISTRY: ghcr.io
