@@ -5,6 +5,7 @@ from typing import Tuple, Dict, List, Optional
 from github import Github
 from github.GithubException import GithubException, UnknownObjectException
 import httpx
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +23,14 @@ def validate_github_url(github_url: str) -> Tuple[str, str]:
     Raises:
         ValueError: If the URL is not valid
     """
-    # Remove trailing slash and .git if present
-    url = github_url.strip().rstrip('/').rstrip('.git')
+    # Remove trailing slash and .git suffix if present
+    url = github_url.strip().rstrip('/')
+    if url.endswith('.git'):
+        url = url[:-4]
     
     # Pattern to extract owner/repo
-    pattern = r'github\.com[/:]([\w\.-]+)/([\w\.-]+)'
+    # \w matches [a-zA-Z0-9_], also allow . and -
+    pattern = r'github\.com[/:]([a-zA-Z0-9_.-]+)/([a-zA-Z0-9_.-]+)'
     match = re.search(pattern, url, re.IGNORECASE)
     
     if not match:
@@ -56,13 +60,18 @@ async def is_repository_public(github_url: str) -> Tuple[bool, Optional[Dict]]:
     """
     owner, repo_name = validate_github_url(github_url)
     
-    # Use httpx to make request without authentication
+    # Use httpx to make request with optional authentication
     # If returns 200, it's public. If 404/403, it's private or doesn't exist
     api_url = f"https://api.github.com/repos/{owner}/{repo_name}"
     
+    # Add auth header if token is available
+    headers = {}
+    if settings.GITHUB_TOKEN:
+        headers["Authorization"] = f"token {settings.GITHUB_TOKEN}"
+    
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.get(api_url, timeout=10.0)
+            response = await client.get(api_url, headers=headers, timeout=10.0)
             
             if response.status_code == 200:
                 repo_data = response.json()
@@ -94,9 +103,13 @@ def _fetch_repository_content_sync(github_url: str, repo_info: Optional[Dict] = 
     """
     owner, repo_name = validate_github_url(github_url)
     
-    # Use PyGithub - simpler API, even though it uses urllib3 internally
-    # Since it's public, no token needed
-    g = Github()
+    # Use PyGithub with optional token for higher rate limits
+    if settings.GITHUB_TOKEN:
+        g = Github(settings.GITHUB_TOKEN)
+        logger.debug("[GitHub] Using authenticated requests (higher rate limit)")
+    else:
+        g = Github()
+        logger.debug("[GitHub] Using unauthenticated requests (60 req/hour limit)")
     
     try:
         logger.debug(f"[GitHub] Accessing repository: {owner}/{repo_name}")

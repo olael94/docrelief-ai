@@ -4,7 +4,7 @@ services:
     image: postgres:17-alpine
     container_name: docrelief-postgres
     environment:
-      POSTGRES_USER: postgres
+      POSTGRES_USER: docrelief
       POSTGRES_PASSWORD: docrelief123
       POSTGRES_DB: docrelief
     ports:
@@ -16,7 +16,7 @@ services:
       -c listen_addresses='*'
       -c max_connections=200
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d docrelief"]
+      test: ["CMD-SHELL", "pg_isready -U docrelief -d docrelief"]
       interval: 5s
       timeout: 5s
       retries: 5
