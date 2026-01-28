@@ -159,11 +159,19 @@ async def generate_readme_with_langchain(repo_data: Dict[str, Any], changes: Opt
             HumanMessage(content=prompt_text)
         ]
         
-        logger.debug(f"[OpenAI] Sending request to OpenAI API...")
-        logger.debug(f"   - Model: {model_name}")
-        logger.debug(f"   - Temperature: 0.7")
-        logger.debug(f"   - System message length: {len(system_message)} chars")
-        logger.debug(f"   - User message length: {len(prompt_text)} chars")
+        # Log the full prompt being sent to OpenAI
+        logger.info(f"[OpenAI] ===== Prompt being sent to OpenAI =====")
+        logger.info(f"[OpenAI] Model: {model_name}")
+        logger.info(f"[OpenAI] Temperature: 0.7")
+        logger.info(f"[OpenAI] System message: {system_message}")
+        logger.info(f"[OpenAI] System message length: {len(system_message)} chars")
+        logger.info(f"[OpenAI] Prompt length: {len(prompt_text)} chars")
+        logger.info(f"[OpenAI] Estimated tokens: ~{int(prompt_tokens_estimate)}")
+        logger.info(f"[OpenAI] Full prompt content:")
+        logger.info("=" * 80)
+        logger.info(prompt_text)
+        logger.info("=" * 80)
+        logger.info(f"[OpenAI] Sending request to OpenAI API...")
         
         start_time = datetime.now()
         
