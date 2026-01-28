@@ -8,7 +8,11 @@ from app.config import settings
 from app.db.session import AsyncSessionLocal
 from app.models.generated_readme import GeneratedReadme, ReadmeStatus
 from app.services.github_service import fetch_repository_content, detect_repo_changes
+from app.services.zip_service import extract_zip_file, analyze_project_from_directory
 from sqlalchemy import select
+import tempfile
+import shutil
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +43,7 @@ def create_readme_prompt(repo_data: Dict[str, Any], changes: Optional[Dict] = No
     
     # Note: We don't include existing README to avoid bias in generation
     
-    prompt = f"""You are a software documentation expert. Your task is to generate a complete and professional README.md for a GitHub repository.
+    prompt = f"""You are a software documentation expert. Your task is to generate a complete and professional README.md for a software project.
 
 ## Repository Information
 
@@ -303,5 +307,141 @@ async def process_readme_generation_async(readme_uuid: UUID, github_url: str):
                         readme_record.status = ReadmeStatus.FAILED.value
                         readme_record.readme_content = f"Unexpected error: {str(e)}"
                         await db2.commit()
+            except:
+                pass
+
+
+async def process_zip_readme_generation_async(readme_uuid: UUID, zip_path: str):
+    """
+    Background task to process README generation from uploaded ZIP file.
+    
+    This function:
+    1. Updates status to PROCESSING
+    2. Extracts ZIP file
+    3. Analyzes project directory
+    4. Generates README with OpenAI
+    5. Updates database with COMPLETED status and content
+    6. Cleans up temporary files
+    7. On error: updates with FAILED status and cleans up
+    
+    Args:
+        readme_uuid: UUID of the GeneratedReadme record
+        zip_path: Path to the uploaded ZIP file
+    """
+    extract_dir = None
+    zip_dir = os.path.dirname(zip_path) if zip_path else None
+    
+    async with AsyncSessionLocal() as db:
+        try:
+            # Fetch the GeneratedReadme record
+            result = await db.execute(
+                select(GeneratedReadme).where(GeneratedReadme.id == readme_uuid)
+            )
+            readme_record = result.scalar_one_or_none()
+            
+            if not readme_record:
+                logger.error(f"[ZIP Background Task] GeneratedReadme {readme_uuid} not found")
+                # Clean up ZIP file if record not found
+                if zip_path and os.path.exists(zip_path):
+                    try:
+                        os.remove(zip_path)
+                        if zip_dir and os.path.exists(zip_dir):
+                            try:
+                                os.rmdir(zip_dir)
+                            except:
+                                pass
+                    except:
+                        pass
+                return
+            
+            # Update status to PROCESSING
+            readme_record.status = ReadmeStatus.PROCESSING.value
+            await db.commit()
+            logger.info(f"[ZIP Background Task] Started processing README {readme_uuid}")
+            
+            try:
+                # STEP 1: Extract ZIP file
+                logger.info(f"[ZIP Background Task] Extracting ZIP file: {zip_path}")
+                extract_dir = tempfile.mkdtemp(prefix="readme_extract_")
+                project_path = extract_zip_file(zip_path, extract_dir)
+                logger.info(f"[ZIP Background Task] Extracted to: {project_path}")
+                
+                # STEP 2: Analyze project directory
+                logger.info(f"[ZIP Background Task] Analyzing project structure")
+                repo_data = analyze_project_from_directory(project_path, max_files=50)
+                logger.info(f"[ZIP Background Task] Analysis complete - Language: {repo_data.get('language', 'Unknown')}")
+                
+                # STEP 3: Generate README (no changes detection for ZIP uploads)
+                logger.info(f"[ZIP Background Task] Generating README with AI for {readme_record.repo_name}")
+                readme_content = await generate_readme_with_langchain(repo_data, changes=None)
+                
+                # STEP 4: Update record with COMPLETED status and content
+                readme_record.status = ReadmeStatus.COMPLETED.value
+                readme_record.readme_content = readme_content
+                await db.commit()
+                
+                logger.info(f"[ZIP Background Task] Successfully completed README generation {readme_uuid}")
+                
+            except Exception as e:
+                # Update with FAILED status
+                readme_record.status = ReadmeStatus.FAILED.value
+                error_message = str(e)
+                readme_record.readme_content = f"Error generating README: {error_message}"
+                await db.commit()
+                
+                logger.error(f"[ZIP Background Task] Failed to generate README {readme_uuid}: {error_message}")
+            
+            finally:
+                # STEP 5: Clean up temporary files
+                try:
+                    # Remove extracted directory
+                    if extract_dir and os.path.exists(extract_dir):
+                        logger.debug(f"[ZIP Background Task] Cleaning up extract directory: {extract_dir}")
+                        shutil.rmtree(extract_dir, ignore_errors=True)
+                    
+                    # Remove ZIP file
+                    if zip_path and os.path.exists(zip_path):
+                        logger.debug(f"[ZIP Background Task] Cleaning up ZIP file: {zip_path}")
+                        os.remove(zip_path)
+                    
+                    # Remove ZIP directory if empty
+                    if zip_dir and os.path.exists(zip_dir):
+                        try:
+                            os.rmdir(zip_dir)
+                        except:
+                            pass  # Directory not empty or already removed
+                    
+                    logger.debug(f"[ZIP Background Task] Cleanup complete")
+                except Exception as cleanup_error:
+                    logger.warning(f"[ZIP Background Task] Error during cleanup: {str(cleanup_error)}")
+                
+        except Exception as e:
+            logger.error(f"[ZIP Background Task] Unexpected error processing README {readme_uuid}: {str(e)}")
+            
+            # Try to update status to FAILED if possible
+            try:
+                async with AsyncSessionLocal() as db2:
+                    result = await db2.execute(
+                        select(GeneratedReadme).where(GeneratedReadme.id == readme_uuid)
+                    )
+                    readme_record = result.scalar_one_or_none()
+                    if readme_record:
+                        readme_record.status = ReadmeStatus.FAILED.value
+                        readme_record.readme_content = f"Unexpected error: {str(e)}"
+                        await db2.commit()
+            except:
+                pass
+            
+            # Clean up files even on unexpected error
+            try:
+                if extract_dir and os.path.exists(extract_dir):
+                    shutil.rmtree(extract_dir, ignore_errors=True)
+                if zip_path and os.path.exists(zip_path):
+                    os.remove(zip_path)
+                if zip_dir and os.path.exists(zip_dir):
+                    try:
+                        os.rmdir(zip_dir)
+                    except:
+                        pass
             except:
                 pass
