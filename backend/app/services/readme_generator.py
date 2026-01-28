@@ -201,7 +201,7 @@ async def generate_readme_with_langchain(repo_data: Dict[str, Any], changes: Opt
         raise Exception(f"Error generating README with OpenAI: {str(e)}")
 
 
-async def process_readme_generation_async(readme_uuid: UUID, github_url: str):
+async def process_readme_generation_async(readme_uuid: UUID, github_url: str, github_api_key: Optional[str] = None):
     """
     Background task to process README generation asynchronously.
     
@@ -215,6 +215,7 @@ async def process_readme_generation_async(readme_uuid: UUID, github_url: str):
     Args:
         readme_uuid: UUID of the GeneratedReadme record
         github_url: GitHub repository URL to process
+        github_api_key: Optional GitHub API token for accessing private repositories
     """
     async with AsyncSessionLocal() as db:
         try:
@@ -235,8 +236,11 @@ async def process_readme_generation_async(readme_uuid: UUID, github_url: str):
             
             try:
                 # [] STEP 1: Fetch repository content
-                logger.info(f"[Background Task] Fetching repository content for {github_url}")
-                repo_data = await fetch_repository_content(github_url)
+                if github_api_key:
+                    logger.info(f"[Background Task] Fetching repository content for {github_url} (with authentication)")
+                else:
+                    logger.info(f"[Background Task] Fetching repository content for {github_url}")
+                repo_data = await fetch_repository_content(github_url, github_api_key=github_api_key)
                 current_commit_sha = repo_data.get("latest_commit_sha")
 
                 # [] STEP 2: Check for previous README generation
@@ -263,7 +267,8 @@ async def process_readme_generation_async(readme_uuid: UUID, github_url: str):
                         changes_detected = await detect_repo_changes(
                             github_url,
                             previous_readme.commit_sha,
-                            current_commit_sha
+                            current_commit_sha,
+                            github_api_key=github_api_key
                         )
                 else:
                     logger.info(f"[First Time] No previous generation found for this repo")

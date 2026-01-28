@@ -47,31 +47,47 @@ class GenerateReadmeRequest(BaseModel):
     """Schema for README generation request"""
     github_url: str
     session_id: Optional[int] = None
+    github_api_key: Optional[str] = None
 
     @field_validator('github_url')
     @classmethod
     def validate_github_url(cls, v: str) -> str:
         """Validates if the URL is a valid GitHub repository"""
-        patterns = [
-            r'^https?://github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+(?:/|\.git)?/?$',
-            r'^https?://www\.github\.com/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+(?:/|\.git)?/?$',
-        ]
+        # Log the input to see if it's already truncated - use ERROR level to ensure it shows
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"[DEBUG Schema] Input URL: '{v}' (length: {len(v)})")
+        logger.error(f"[DEBUG Schema] Input URL repr: {repr(v)}")
+        logger.info(f"[Schema Validation] Input URL: '{v}' (length: {len(v)})")
         
         v = v.strip()
         
-        for pattern in patterns:
-            if re.match(pattern, v, re.IGNORECASE):
-                return v
+        # More permissive validation - just check basic structure
+        # GitHub allows various characters in repo names, so we'll be lenient here
+        # and let the service layer do the actual extraction
+        if not v.startswith(('http://github.com/', 'https://github.com/', 
+                           'http://www.github.com/', 'https://www.github.com/')):
+            raise ValueError(
+                "Invalid URL. Must be in format: https://github.com/owner/repository"
+            )
         
-        raise ValueError(
-            "Invalid URL. Must be in format: https://github.com/owner/repository"
-        )
+        # Check that it has at least owner/repo structure
+        if 'github.com/' in v.lower():
+            parts = v.lower().split('github.com/')[1].split('/')
+            if len(parts) < 2 or not parts[0] or not parts[1]:
+                raise ValueError(
+                    "Invalid URL. Must be in format: https://github.com/owner/repository"
+                )
+        
+        logger.info(f"[Schema Validation] Validated URL: '{v}' (length: {len(v)})")
+        return v
 
     class Config:
         json_schema_extra = {
             "example": {
                 "github_url": "https://github.com/owner/repository",
-                "session_id": 1
+                "session_id": 1,
+                "github_api_key": "ghp_xxxxxxxxxxxxxxxxxxxx"  # Optional: for private repos
             }
         }
 
