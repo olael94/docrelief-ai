@@ -3,7 +3,7 @@ import HeroButton from "./HeroButton";
 export default function UploadTab() {
     return (
         <>
-            <div className=" flex flex-col items-center justify-center flex flex-col items-center justify-center p-4">
+            <div className="w-full flex flex-col items-center justify-center p-4">
                 <div className="bg-gray-200 rounded-3xl">
                     <div className="p-6 flex flex-col items-center justify-center">
                         <p>+</p>
@@ -13,17 +13,16 @@ export default function UploadTab() {
                     </div>
                 </div>
 
-            <h1 className="self-start pt-4 pb-4">Uploaded files (0)</h1>
-            <ul>
-                <li>No files uploaded yet.</li>
-            </ul>
-            
-            <HeroButton text="Generate README from Files →" />
-            
+                <h1 className="self-start pt-4 pb-4">Uploaded files (0)</h1>
+                <ul>
+                    <li>No files uploaded yet.</li>
+                </ul>
+
+                <HeroButton text="Generate README from Files →"/>
+
                 {/* <input type="file" onChange={handleFileChange}></input> */}
-                
+
             </div>
         </>
-        
     );
 }
