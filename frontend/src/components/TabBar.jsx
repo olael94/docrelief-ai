@@ -17,7 +17,7 @@ export default function TabBar({activeTab, setActiveTab, tabs}) {
                 <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`relative z-10 flex items-center justify-center px-14.5 py-2 rounded-3xl transition-all duration-300 cursor-pointer leading-none ${
+                    className={`relative z-10 flex items-center justify-center px-4 md:px-14.5 py-2 rounded-3xl transition-all duration-300 cursor-pointer leading-none text-sm md:text-base ${
                         activeTab === tab.id
                             ? 'text-black font-bold'
                             : 'text-gray-600 hover:text-gray-900 font-medium'

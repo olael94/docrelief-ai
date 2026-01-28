@@ -70,7 +70,7 @@ async def is_repository_public(github_url: str) -> Tuple[bool, Optional[Dict]]:
                 return is_public, repo_data if is_public else None
             elif response.status_code == 404:
                 # Repository not found (may be private or doesn't exist)
-                raise ValueError(f"Repository not found: {owner}/{repo_name}")
+                raise ValueError(f"Repository not found or is private.: {owner}/{repo_name}")
             elif response.status_code == 403:
                 # Rate limit or access denied
                 raise Exception("Access denied to GitHub API. May be rate limit or private repository.")
