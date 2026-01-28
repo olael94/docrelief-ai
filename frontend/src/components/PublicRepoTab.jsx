@@ -41,7 +41,7 @@ export default function PublicRepoTab() {
             }
 
             // Navigate to loading page with readme_id
-            navigate('/loading', {state: {readmeId: response.readme_id}});
+            navigate('/loading', {state: {readmeId: response.id}});
 
         } catch (error) {
             setIsSubmitting(false);
@@ -58,8 +58,8 @@ export default function PublicRepoTab() {
                     // Invalid URL (shouldn't happen with frontend validation, but just in case)
                     toast.error("Please enter a valid GitHub repository URL");
                 } else if (status === 404) {
-                    // Repository not found
-                    toast.error("Repository not found. Please check the URL.");
+                    // Repository not found OR private (GitHub returns 404 for both)
+                    toast.error("Repository not found or is private. For private repos, use the 'Private Repo' tab.");
                 } else {
                     // Other errors
                     toast.error(message);
@@ -72,10 +72,10 @@ export default function PublicRepoTab() {
     };
 
     return (
-        <div className="w-full flex flex-col items-center h-full">
+        <div className="w-full flex flex-col items-center h-full min-h-[500px]">
             <h1 className="font-fire-code self-start pt-4 pb-4">Repository URL</h1>
             <input
-                className="bg-navbar rounded-3xl py-3 px-8 w-[660px] text-left"
+                className="bg-navbar rounded-3xl py-3 px-8 w-[340px] md:w-[660px] text-left"
                 type="text"
                 placeholder="https://github.com/username/repo"
                 value={repoUrl}

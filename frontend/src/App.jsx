@@ -2,6 +2,7 @@ import {Routes, Route, Link} from 'react-router-dom';
 import {Toaster} from 'react-hot-toast';
 import LandingPage from './pages/LandingPage';
 import PreviewPage from './pages/PreviewPage';
+import LoadingPage from './pages/LoadingPage';
 import {healthCheck} from './services/api';
 import {useState, useEffect} from 'react';
 
@@ -27,7 +28,7 @@ function App() {
                 <Route path="/" element={<LandingPage/>}/>
                 <Route path="/preview" element={<PreviewPage/>}/>
                 <Route path="/preview/:id" element={<PreviewPage/>}/>
-                {/* TODO: Add /loading route once Story 6 LoadingPage is created */}
+                <Route path="/loading" element={<LoadingPage/>}/>
                 {/* TODO: Add /connect-github route for OAuth flow */}
             </Routes>
         </>

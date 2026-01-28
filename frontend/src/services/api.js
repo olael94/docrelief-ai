@@ -42,7 +42,7 @@ export const downloadReadme = async (readmeId) => {
 };
 
 // Poll for README completion
-export const pollReadmeStatus = async (readmeId, maxAttempts = 30, intervalMs = 2000) => {
+export const pollReadmeStatus = async (readmeId, maxAttempts = 15, intervalMs = 2000) => {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const data = await getReadme(readmeId);
 
