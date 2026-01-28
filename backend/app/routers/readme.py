@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks, UploadFile, File
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
+from typing import Optional
 from app.schemas.readme import (
     GenerateReadmeRequest, 
     GenerateReadmeResponse,
@@ -14,7 +15,7 @@ from app.services.github_service import (
     is_repository_public,
     is_repository_accessible
 )
-from app.services.readme_generator import process_readme_generation_async
+from app.services.readme_generator import process_readme_generation_async, process_zip_readme_generation_async
 from app.services.session_service import get_or_create_anonymous_session
 from app.db.session import get_db
 from app.models.generated_readme import GeneratedReadme, ReadmeStatus, InputMethod
@@ -22,6 +23,9 @@ import tempfile
 import os
 import logging
 import asyncio
+import zipfile
+import aiofiles
+import traceback
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -164,6 +168,263 @@ async def generate_readme(
     except Exception as e:
         # Catch any other unexpected error
         logger.error(f"[README Generation] Unexpected error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected error: {str(e)}"
+        )
+
+
+@router.post("/upload", response_model=GenerateReadmeResponse)
+async def upload_zip_readme(
+    file: UploadFile = File(...),
+    session_id: Optional[int] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Initiates asynchronous README generation from an uploaded ZIP file.
+    
+    Receives a ZIP file containing a project, validates it,
+    creates a database record and returns an ID for status checking.
+    
+    Args:
+        file: Uploaded ZIP file
+        session_id: Optional session ID
+        db: Database session
+        
+    Returns:
+        GenerateReadmeResponse: Contains UUID and status
+        
+    Raises:
+        HTTPException: In case of validation or processing errors
+    """
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+    
+    logger.info(f"[ZIP Upload] ===== Starting upload request =====")
+    logger.info(f"[ZIP Upload] File: {file.filename}")
+    logger.info(f"[ZIP Upload] Content type: {file.content_type}")
+    logger.info(f"[ZIP Upload] Session ID: {session_id}")
+    
+    zip_path = None
+    try:
+        # 1. Validate file type
+        logger.debug("[ZIP Upload] Step 1: Validating file type")
+        if not file.filename:
+            logger.warning("[ZIP Upload] No filename provided")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No file provided"
+            )
+        
+        file_extension = os.path.splitext(file.filename)[1].lower()
+        logger.debug(f"[ZIP Upload] File extension: {file_extension}")
+        if file_extension != '.zip':
+            logger.warning(f"[ZIP Upload] Invalid file extension: {file_extension}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid file type. Expected .zip, got {file_extension}"
+            )
+        
+        # 2. Validate file size
+        logger.debug("[ZIP Upload] Step 2: Reading file content and validating size")
+        # Read file content to check size and save
+        file_content = await file.read()
+        file_size = len(file_content)
+        logger.info(f"[ZIP Upload] File size: {file_size} bytes ({file_size / (1024*1024):.2f} MB)")
+        
+        if file_size > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File too large. Maximum size is {MAX_FILE_SIZE / (1024*1024):.1f} MB, got {file_size / (1024*1024):.2f} MB"
+            )
+        
+        if file_size == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File is empty"
+            )
+        
+        # 3. Validate ZIP file structure
+        logger.debug("[ZIP Upload] Step 3: Validating ZIP file structure")
+        try:
+            # Check if it's a valid ZIP file by trying to read it
+            import io
+            zip_file = zipfile.ZipFile(io.BytesIO(file_content))
+            zip_file.testzip()  # Test for corrupted files
+            zip_file.close()
+            logger.debug("[ZIP Upload] ZIP file structure is valid")
+        except zipfile.BadZipFile as e:
+            logger.error(f"[ZIP Upload] Invalid ZIP file: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or corrupted ZIP file"
+            )
+        except Exception as e:
+            logger.error(f"[ZIP Upload] Error validating ZIP file: {str(e)}")
+            logger.error(f"[ZIP Upload] Error type: {type(e).__name__}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Error validating ZIP file: {str(e)}"
+            )
+        
+        # 4. Save ZIP file to temporary location
+        logger.debug("[ZIP Upload] Step 4: Saving ZIP file to temporary location")
+        try:
+            # Create temp directory for this upload
+            temp_dir = tempfile.mkdtemp(prefix="readme_zip_")
+            zip_path = os.path.join(temp_dir, file.filename)
+            logger.debug(f"[ZIP Upload] Temp directory: {temp_dir}")
+            logger.debug(f"[ZIP Upload] ZIP path: {zip_path}")
+            
+            # Write file content to disk
+            async with aiofiles.open(zip_path, 'wb') as f:
+                await f.write(file_content)
+            
+            logger.info(f"[ZIP Upload] Saved ZIP file to {zip_path} ({file_size} bytes)")
+        except Exception as e:
+            logger.error(f"[ZIP Upload] Error saving ZIP file: {str(e)}")
+            logger.error(f"[ZIP Upload] Error type: {type(e).__name__}")
+            logger.error(f"[ZIP Upload] Traceback: {traceback.format_exc()}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error saving uploaded file: {str(e)}"
+            )
+        
+        # 5. Get or create session
+        logger.debug("[ZIP Upload] Step 5: Getting or creating session (database operation)")
+        try:
+            session = await get_or_create_anonymous_session(db, session_id)
+            logger.info(f"[ZIP Upload] Session ID: {session.id}")
+        except Exception as e:
+            logger.error(f"[ZIP Upload] Database error when getting/creating session: {str(e)}")
+            logger.error(f"[ZIP Upload] Error type: {type(e).__name__}")
+            logger.error(f"[ZIP Upload] Traceback: {traceback.format_exc()}")
+            # Check if it's a connection error
+            error_str = str(e).lower()
+            if "connection refused" in error_str or "errno 61" in error_str:
+                logger.error("[ZIP Upload] Database connection refused - PostgreSQL may not be running")
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Database connection failed. Please ensure PostgreSQL is running."
+                )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Database error: {str(e)}"
+            )
+        
+        # 6. Extract project name from filename (remove .zip extension)
+        project_name = os.path.splitext(file.filename)[0]
+        logger.debug(f"[ZIP Upload] Project name: {project_name}")
+        
+        # 7. Create GeneratedReadme record with PENDING status
+        logger.debug("[ZIP Upload] Step 6: Creating GeneratedReadme record (database operation)")
+        try:
+            readme_record = GeneratedReadme(
+                session_id=session.id,
+                user_id=None,  # Anonymous for now
+                repo_name=project_name,
+                repo_url=None,  # No URL for ZIP uploads
+                input_method=InputMethod.FILE_UPLOAD,
+                status=ReadmeStatus.PENDING.value,
+                readme_content=None,
+                was_committed=False,
+                was_downloaded=False
+            )
+            
+            logger.debug("[ZIP Upload] Adding record to database session")
+            db.add(readme_record)
+            
+            logger.debug("[ZIP Upload] Committing to database")
+            await db.commit()
+            
+            logger.debug("[ZIP Upload] Refreshing record from database")
+            await db.refresh(readme_record)
+            
+            logger.info(f"[ZIP Upload] Created record {readme_record.id} with PENDING status")
+        except Exception as e:
+            logger.error(f"[ZIP Upload] Database error when creating record: {str(e)}")
+            logger.error(f"[ZIP Upload] Error type: {type(e).__name__}")
+            logger.error(f"[ZIP Upload] Traceback: {traceback.format_exc()}")
+            # Check if it's a connection error
+            error_str = str(e).lower()
+            if "connection refused" in error_str or "errno 61" in error_str:
+                logger.error("[ZIP Upload] Database connection refused - PostgreSQL may not be running")
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Database connection failed. Please ensure PostgreSQL is running."
+                )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Database error: {str(e)}"
+            )
+        
+        # 8. Start background task
+        logger.debug("[ZIP Upload] Step 7: Starting background task")
+        asyncio.create_task(process_zip_readme_generation_async(readme_record.id, zip_path))
+        logger.info(f"[ZIP Upload] Started background task for {readme_record.id}")
+        
+        # 9. Return UUID and status immediately
+        logger.debug("[ZIP Upload] Step 8: Returning response")
+        status_str = str(readme_record.status) if readme_record.status else ReadmeStatus.PENDING.value
+        logger.info(f"[ZIP Upload] ===== Upload request completed successfully =====")
+        return GenerateReadmeResponse(
+            id=readme_record.id,
+            status=status_str
+        )
+            
+    except HTTPException:
+        # Clean up temp file if created
+        if zip_path and os.path.exists(zip_path):
+            try:
+                os.remove(zip_path)
+                # Also try to remove parent temp directory if empty
+                temp_dir = os.path.dirname(zip_path)
+                if os.path.exists(temp_dir):
+                    try:
+                        os.rmdir(temp_dir)
+                    except:
+                        pass
+            except:
+                pass
+        raise
+    except HTTPException:
+        # Re-raise HTTP exceptions (already logged)
+        raise
+    except Exception as e:
+        # Clean up temp file if created
+        if zip_path and os.path.exists(zip_path):
+            try:
+                logger.debug(f"[ZIP Upload] Cleaning up temp file: {zip_path}")
+                os.remove(zip_path)
+                temp_dir = os.path.dirname(zip_path)
+                if os.path.exists(temp_dir):
+                    try:
+                        os.rmdir(temp_dir)
+                    except:
+                        pass
+            except Exception as cleanup_error:
+                logger.warning(f"[ZIP Upload] Error during cleanup: {str(cleanup_error)}")
+        
+        # Log detailed error information
+        logger.error(f"[ZIP Upload] ===== Unexpected error occurred =====")
+        logger.error(f"[ZIP Upload] Error message: {str(e)}")
+        logger.error(f"[ZIP Upload] Error type: {type(e).__name__}")
+        logger.error(f"[ZIP Upload] Error args: {e.args}")
+        logger.error(f"[ZIP Upload] Full traceback:")
+        logger.error(traceback.format_exc())
+        
+        # Check if it's a connection error
+        error_str = str(e).lower()
+        if "connection refused" in error_str or "errno 61" in error_str:
+            logger.error("[ZIP Upload] Connection refused error detected")
+            logger.error("[ZIP Upload] This usually means:")
+            logger.error("[ZIP Upload]   1. PostgreSQL is not running")
+            logger.error("[ZIP Upload]   2. Wrong host/port in DATABASE_URL")
+            logger.error("[ZIP Upload]   3. Firewall blocking connection")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Database connection failed: {str(e)}. Please ensure PostgreSQL is running and accessible."
+            )
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unexpected error: {str(e)}"
