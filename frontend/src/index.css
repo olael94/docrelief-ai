@@ -1,5 +1,31 @@
 @import "tailwindcss";
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+    @apply bg-gray-50;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.font-poppins {
+    font-family: 'Poppins', sans-serif;
+}
+
+.font-fire-code {
+    font-family: 'Fira Code', monospace;
+}
+
+.bg-navbar {
+    background-color: #d9d9d9;
+}
+
+.btn-landing {
+    background-color: #5FDA8A;
+}
+
 /* Additional styles for syntax highlighting */
 .hljs {
   background: #f6f8fa !important;
