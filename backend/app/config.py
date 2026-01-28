@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -6,6 +7,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     OPENAI_API_KEY: str
     SECRET_KEY: str
+    GITHUB_TOKEN: Optional[str] = None  # Optional GitHub token for higher rate limits
 
     class Config:
         env_file = ".env"

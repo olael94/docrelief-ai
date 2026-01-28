@@ -34,4 +34,4 @@ postgres_data/
 *.log
 npm-debug.log*
 
-.env
+.envstart-dev.sh

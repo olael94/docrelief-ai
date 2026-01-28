@@ -5,6 +5,7 @@ from typing import Tuple, Dict, List, Optional
 from github import Github
 from github.GithubException import GithubException, UnknownObjectException
 import httpx
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 

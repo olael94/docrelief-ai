@@ -11,8 +11,9 @@ app = FastAPI(title="DocRelief AI")
 app.add_middleware(
     CORSMiddleware,
     # This should be changed to the actual frontend URL in production
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173",
-    "http://192.168.0.169:5173", "http://66.7.119.183:5173", "http://192.168.86.249:5173"],
+    # allow_origins=["http://localhost:5173", "http://127.0.0.1:5173",
+    # "http://192.168.0.169:5173", "http://66.7.119.183:5173", "http://192.168.86.249:5173"],
+    allow_origins=["*"],  # Allow all origins for development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
