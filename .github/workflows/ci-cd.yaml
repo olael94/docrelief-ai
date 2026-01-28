@@ -60,5 +60,5 @@ jobs:
         key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
           cd /opt/docrelief-docker
-          IMAGE_TAG=${{ github.sha }} sudo --preserve-env=IMAGE_TAG docker compose pull
-          IMAGE_TAG=${{ github.sha }} sudo --preserve-env=IMAGE_TAG docker compose up -d --remove-orphans
+          IMAGE_TAG=${{ github.sha }} docker compose pull
+          IMAGE_TAG=${{ github.sha }} docker compose up -d --remove-orphans
