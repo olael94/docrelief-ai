@@ -40,6 +40,12 @@ def extract_zip_file(zip_path: str, extract_to: str) -> str:
             max_extract_size = 100 * 1024 * 1024  # 100 MB limit
             if total_size > max_extract_size:
                 raise ValueError(f"ZIP file too large to extract safely: {total_size} bytes")
+
+            # SECURITY CHECK - prevent directory traversal attacks
+            for file_info in zip_ref.infolist():
+                # Check for directory traversal
+                if file_info.filename.startswith('/') or '..' in file_info.filename:
+                    raise ValueError(f"Unsafe file path detected: {file_info.filename}")
             
             # Extract all files
             zip_ref.extractall(extract_to)
