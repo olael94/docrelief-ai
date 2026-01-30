@@ -35,3 +35,5 @@ postgres_data/
 npm-debug.log*
 
 .envstart-dev.sh
+.env
+.claude/settings.local.json
