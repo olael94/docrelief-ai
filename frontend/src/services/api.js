@@ -42,7 +42,8 @@ export const downloadReadme = async (readmeId) => {
 };
 
 // Poll for README completion
-export const pollReadmeStatus = async (readmeId, maxAttempts = 15, intervalMs = 2000) => {
+// Default: 60 attempts × 2 seconds = 120 seconds (2 minutes) timeout
+export const pollReadmeStatus = async (readmeId, maxAttempts = 60, intervalMs = 2000) => {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const data = await getReadme(readmeId);
 
