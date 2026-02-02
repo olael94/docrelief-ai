@@ -1,9 +1,29 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text  # ADD THIS IMPORT
+from sqlalchemy import text
 from app.db.session import get_db
 from app.routers import readme
+import logging
+import sys
+
+# Configure logging BEFORE creating the app
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ],
+    force=True  # Override any existing configuration
+)
+
+# Set specific loggers
+logging.getLogger("app").setLevel(logging.INFO)
+logging.getLogger("uvicorn.access").setLevel(logging.WARNING)  # Reduce access log noise
+
+logger = logging.getLogger(__name__)
+logger.info("Application logging configured")
 
 app = FastAPI(title="DocRelief AI")
 
