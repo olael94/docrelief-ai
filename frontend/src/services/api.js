@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // 1. Define the base URL clearly
-// const API_BASE_URL = window.location.hostname === 'localhost'
+`// const API_BASE_URL = window.location.hostname === 'localhost'
 //     ? 'http://localhost:8000'
 //     : 'http://66.7.119.183:8000';
 
