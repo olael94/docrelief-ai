@@ -1,4 +1,5 @@
 import HeroButton from "./HeroButton";
+import {FolderOpen} from "lucide-react";
 import { useState, useRef } from "react";
 import { toast } from "react-hot-toast";
 import { uploadZipFile } from "../services/api";
@@ -117,54 +118,25 @@ const handleSubmit = async () => {
 
     return (
         <>
-            <div className="w-full flex flex-col items-center justify-center p-4">
-                <div
-                    className={`bg-gray-200 rounded-3xl transition-colors ${isDragging ? 'bg-gray-300 border-2 border-blue-500' : ''}`}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    onClick={handleBoxClick}
-                >
-                    <div className="p-6 flex flex-col items-center justify-center cursor-pointer">
-                        <p className="text-4xl">{isDragging ? '↓' : '+'}</p>
-                        <p className="pb-2">Drag & drop a file here or click to browse</p>
-                        <p>Supported: .zip (one file only)</p>
-                        <p>Max: 10MB</p>
-                        <input
-                            ref={fileInputRef}
-                            className="hidden"
-                            type="file"
-                            accept=".zip"
-                            onChange={handleFileChange}
-                        />
+            <div className="w-[340px] md:w-[660px] flex flex-col items-center h-full min-h-[500px]">
+                <div className="bg-gray-100 rounded-3xl w-full h-[200px]">
+                    <div className="p-9 flex flex-col items-center w-full justify-center">
+                        <FolderOpen className="text-gray-400 w-10 h-10"/>
+                        <p className="pb-2 text-gray-400">Drag & drop your zip file here or click to browse</p>
+                        <p className="text-gray-400">Supported: .zip files only</p>
+                        <p className="text-gray-400">Max: 10MB</p>
                     </div>
                 </div>
 
-                <h1 className="self-start pt-4 pb-4">Uploaded file</h1>
-                <div className="w-full">
-                    {files.length === 0 ? (
-                        <p>No file uploaded yet.</p>
-                    ) : (
-                        <div className="flex items-center gap-2 mb-2">
-                            <p>
-                                {files[0].name} ({(files[0].size / 1024).toFixed(2)} KB)
-                            </p>
-                            <button
-                                onClick={clearFile}
-                                className="text-red-500 hover:text-red-700 font-bold text-xl"
-                                title="Clear file"
-                            >
-                                ×
-                            </button>
-                        </div>
-                    )}
+                <h1 className="self-start pt-4 pb-4 font-fire-code text-bold">Uploaded files (0)</h1>
+                <ul>
+                    <li className="self-start pt-4 pb-4 font-fire-code text-bold">No files uploaded yet.</li>
+                </ul>
+                <div className="mt-auto mb-9">
+                    <HeroButton text="Generate README from Files →"/>
                 </div>
+                {/* <input type="file" onChange={handleFileChange}></input> */}
 
-                <HeroButton
-                    text={isSubmitting ? "Uploading..." : "Generate README from Files →"}
-                    onClick={handleSubmit}
-                    disabled={files.length === 0 || isSubmitting}
-                />
             </div>
         </>
     );
