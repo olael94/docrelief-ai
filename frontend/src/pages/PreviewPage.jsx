@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Download, RefreshCw, Github, CheckCircle } from 'lucide-react';
 import { generateReadme, getReadme, pollReadmeStatus, updateReadmeDownloaded } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
-import Navbar from '../components/Navbar.jsx';
 import EditorPanel from '../components/EditorPanel.jsx';
 import PreviewPanel from '../components/PreviewPanel.jsx';
 
@@ -259,10 +258,6 @@ const PreviewPage = () => {
 
     return (
         <div className="min-h-screen md:h-screen flex flex-col bg-gray-50">
-            {/* Toast Container */}
-            <Toaster position="top-right"/>
-            <Navbar/>
-
             {/* Repository Info - Read Only */}
             <div className="flex items-center justify-center gap-3 mt-8 mb-6 px-6">
                 <Github className="w-5 h-5 text-gray-700"/>
