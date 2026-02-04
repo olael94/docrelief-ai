@@ -75,7 +75,7 @@ export default function PublicRepoTab() {
         <div className="w-full flex flex-col items-center h-full min-h-[500px]">
             <h1 className="font-fire-code self-start pt-4 pb-4">Repository URL</h1>
             <input
-                className="bg-navbar rounded-3xl py-3 px-8 w-[340px] md:w-[660px] text-left"
+                className="bg-[#d9d9d9] rounded-3xl py-3 px-8 w-[340px] md:w-[660px] text-left"
                 type="text"
                 placeholder="https://github.com/username/repo"
                 value={repoUrl}

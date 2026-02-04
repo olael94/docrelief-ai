@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import ProgressStep from '../components/ProgressStep';
 import { pollReadmeStatus } from '../services/api';
 
@@ -74,7 +73,6 @@ const LoadingPage = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Navbar/>
 
             <div className="flex items-center justify-center min-h-[80vh]">
                 <div className="bg-white rounded-3xl shadow-lg p-6 md:p-12 w-full max-w-[400px] md:max-w-md">

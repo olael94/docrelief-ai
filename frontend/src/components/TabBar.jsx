@@ -4,7 +4,7 @@ export default function TabBar({activeTab, setActiveTab, tabs}) {
         <div className="relative flex gap-2 bg-gray-50 p-1 rounded-3xl w-full justify-center">
             {/* Sliding background indicator */}
             <div
-                className="absolute bg-navbar rounded-3xl transition-all duration-300 ease-in-out shadow"
+                className="absolute bg-[#d9d9d9] rounded-3xl transition-all duration-300 ease-in-out shadow"
                 style={{
                     left: `calc(${tabs.findIndex(tab => tab.id === activeTab) * (100 / tabs.length)}%)`,
                     width: `calc(${100 / tabs.length}%)`,

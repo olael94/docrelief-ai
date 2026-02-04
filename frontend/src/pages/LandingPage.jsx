@@ -1,5 +1,4 @@
 import {useState} from "react";
-import Navbar from "../components/Navbar";
 import TabBar from "../components/TabBar";
 import PublicRepoTab from "../components/PublicRepoTab";
 import UploadTab from "../components/UploadTab";
@@ -17,8 +16,6 @@ export default function LandingPage() {
 
     return (
         <>
-            <Navbar/>
-
             {/* Hero Section */}
             <div className="mt-20 mb-10 flex flex-col items-center justify-center px-4">
                 <h1 className="font-poppins text-5xl font-black text-center max-w-3xl">
@@ -28,6 +25,8 @@ export default function LandingPage() {
                     Stop writing READMEs from scratch. Let AI do it for you.
                 </h2>
 
+                {/* How it Works Section */}
+                <HowItWorks/>
                 {/* Tabbed Interface Card */}
                 <div
                     className="w-[400px] md:w-[921px] h-auto md:h-[765px] pt-16 md:px-5 rounded-4xl shadow-2xl flex flex-col items-center justify-center bg-white gap-8 py-8">
@@ -41,9 +40,6 @@ export default function LandingPage() {
                         {activeTab === 'private-repo' && <PrivateRepoTab/>}
                     </div>
                 </div>
-
-                {/* How it Works Section */}
-                <HowItWorks/>
             </div>
         </>
     );

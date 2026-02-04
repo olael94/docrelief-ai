@@ -1,15 +1,16 @@
 import {Link} from 'react-router-dom';
+import logo from '../assets/DocRelief_Logo3.png';
 
 export default function Navbar() {
     return (
         <>
             {/* TODO: Add custom gray */}
-            <div className="navbar-padding pl-4 pr-4">
+            <div className="sticky top-0 z-50 navbar-padding pl-4 pr-4">
                 <nav
-                    className="bg-gray-50 navbar m-4 bg-navbar rounded-3xl p-4 text-black font-bold flex justify-between items-center max-w-screen-2xl mx-auto">
+                    className="bg-gray-50 navbar m-4 bg-navbar rounded-4xl p-4 text-black font-bold flex justify-between items-center max-w-screen-2xl mx-auto">
                     {/* Logo/Brand */}
                     <Link to="/" className="navbar-brand cursor-pointer">
-                        <h1 className="navbar-title">DocRelief AI</h1>
+                        <img src={logo} alt="DocRelief AI" className="h-8 md:h-10" />
                     </Link>
 
                     <div className="navbar-menu">

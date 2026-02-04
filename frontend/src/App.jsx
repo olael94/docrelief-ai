@@ -3,8 +3,11 @@ import {Toaster} from 'react-hot-toast';
 import LandingPage from './pages/LandingPage';
 import PreviewPage from './pages/PreviewPage';
 import LoadingPage from './pages/LoadingPage';
+import TeamPage from './pages/TeamPage';
 import {healthCheck} from './services/api';
 import {useState, useEffect} from 'react';
+import Footer from './components/Footer';
+import Navbar from './components/Navbar';
 
 function App() {
     const [status, setStatus] = useState('checking...');
@@ -23,14 +26,26 @@ function App() {
 
     return (
         <>
-            <Toaster position="top-right"/>
-            <Routes>
-                <Route path="/" element={<LandingPage/>}/>
-                <Route path="/preview" element={<PreviewPage/>}/>
-                <Route path="/preview/:id" element={<PreviewPage/>}/>
-                <Route path="/loading" element={<LoadingPage/>}/>
-                {/* TODO: Add /connect-github route for OAuth flow */}
-            </Routes>
+            <Toaster
+                position="top-right"
+                containerStyle={{
+                    top: 40,    // pixels from top (adjust as needed)
+                    right: 40,  // pixels from right (adjust as needed)
+                }}
+            />
+            <div className="min-h-screen flex flex-col page-gradient">
+                <Navbar/>
+                <div className="flex-grow">
+                    <Routes>
+                        <Route path="/" element={<LandingPage/>}/>
+                        <Route path="/preview" element={<PreviewPage/>}/>
+                        <Route path="/preview/:id" element={<PreviewPage/>}/>
+                        <Route path="/loading" element={<LoadingPage/>}/>
+                        <Route path="/team" element={<TeamPage/>}/>
+                    </Routes>
+                </div>
+                <Footer/>
+            </div>
         </>
     );
 }

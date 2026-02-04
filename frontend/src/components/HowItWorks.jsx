@@ -23,21 +23,21 @@ export default function HowItWorks() {
     ];
 
     return (
-        <div className="mt-16 mb-10 w-full max-w-4xl">
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-                <h2 className="font-poppins text-3xl font-bold text-center mb-8">
+        <div className="w-[400px] md:w-[921px] h-auto rounded-4xl shadow-2xl items-center justify-center bg-white mt-16 mb-10">
+            <div>
+                <h2 className="font-poppins text-3xl font-bold text-center mt-8 mb-6">
                     How it Works
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {steps.map((step) => (
-                        <div key={step.number} className="flex flex-col items-center text-center">
+                        <div key={step.number} className="flex flex-col items-center text-center max-w-[420px] mx-auto px-4">
                             <div
                                 className="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center text-xl font-bold mb-4">
                                 {step.number}
                             </div>
-                            <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
-                            <p className="text-gray-600 text-sm">{step.description}</p>
+                            <h3 className="font-semibold text-lg mb-2 max-w-[160px]">{step.title}</h3>
+                            <p className="text-gray-600 text-sm mb-10 md:max-w-[160px] max-w-[300px]">{step.description}</p>
                         </div>
                     ))}
                 </div>
