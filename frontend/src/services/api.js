@@ -62,6 +62,22 @@ export const pollReadmeStatus = async (readmeId, maxAttempts = 60, intervalMs = 
     throw new Error('README generation timed out');
 };
 
+// Upload ZIP file for README generation
+export const uploadZipFile = async (file, sessionId = null) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (sessionId) {
+        formData.append('session_id', sessionId);
+    }
+
+    const response = await api.post('/api/readme/upload', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+    return response.data;
+};
+
 // Update README was_downloaded flag
 export const updateReadmeDownloaded = async (readmeId) => {
     try {
