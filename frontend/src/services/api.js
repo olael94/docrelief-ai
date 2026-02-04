@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// 1. Define the base URL clearly
-const API_BASE_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000'
-    : 'http://66.7.119.183:8000';
+
+// 1. Define the base URL from environment variable
+// Fallback to localhost, require .env for server
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -57,6 +57,22 @@ export const pollReadmeStatus = async (readmeId, maxAttempts = 60, intervalMs = 
         await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
     throw new Error('README generation timed out');
+};
+
+// Upload ZIP file for README generation
+export const uploadZipFile = async (file, sessionId = null) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (sessionId) {
+        formData.append('session_id', sessionId);
+    }
+
+    const response = await api.post('/api/readme/upload', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+    return response.data;
 };
 
 // Update README was_downloaded flag
