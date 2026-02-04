@@ -33,8 +33,8 @@ function App() {
                     right: 40,  // pixels from right (adjust as needed)
                 }}
             />
-            <Navbar/>
-            <div className="min-h-screen flex flex-col">
+            <div className="min-h-screen flex flex-col page-gradient">
+                <Navbar/>
                 <div className="flex-grow">
                     <Routes>
                         <Route path="/" element={<LandingPage/>}/>
