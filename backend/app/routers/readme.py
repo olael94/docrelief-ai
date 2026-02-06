@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks, UploadFile, File
+from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks, UploadFile, File, Header
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -17,6 +17,8 @@ from app.services.github_service import (
 )
 from app.services.readme_generator import process_readme_generation_async, process_zip_readme_generation_async
 from app.services.session_service import get_or_create_anonymous_session
+from app.services.session_store import session_store
+from app.services.jwt_service import get_session_id_from_token
 from app.db.session import get_db
 from app.models.generated_readme import GeneratedReadme, ReadmeStatus, InputMethod
 import tempfile
@@ -33,20 +35,45 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/readme", tags=["readme"])
 
 
+def get_github_token_from_auth(authorization: Optional[str]) -> Optional[str]:
+    """
+    Extract GitHub token from JWT in Authorization header.
+    
+    Args:
+        authorization: Authorization header value (Bearer <token>)
+        
+    Returns:
+        The GitHub token from the session store, or None if not authenticated
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    
+    token = authorization.replace("Bearer ", "")
+    session_id = get_session_id_from_token(token)
+    
+    if not session_id:
+        return None
+    
+    return session_store.get_github_token(session_id)
+
+
 @router.post("/generate", response_model=GenerateReadmeResponse)
 async def generate_readme(
     request: GenerateReadmeRequest, 
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    authorization: Optional[str] = Header(None)
 ):
     """
-    Initiates asynchronous README generation for a GitHub repository (public or private with API key).
+    Initiates asynchronous README generation for a GitHub repository (public or private).
     
-    Receives a GitHub URL, verifies if the repository is accessible,
-    creates a database record and returns an ID for status checking.
+    For private repositories, authentication is required via:
+    1. JWT token in Authorization header (recommended - GitHub token stored server-side)
+    2. github_api_key in request body (legacy support)
     
     Args:
         request: Object with the GitHub URL, optional session_id, and optional github_api_key
         db: Database session
+        authorization: Optional Bearer token from Authorization header
         
     Returns:
         GenerateReadmeResponse: Contains UUID and status
@@ -55,7 +82,8 @@ async def generate_readme(
         HTTPException: In case of validation, access or processing errors
     """
     github_url = request.github_url
-    github_api_key = request.github_api_key
+    # Try to get token from JWT first (more secure), fallback to body
+    github_api_key = get_github_token_from_auth(authorization) or request.github_api_key
     
     # Log the raw input to see if it's being truncated - USE ERROR LEVEL TO ENSURE IT SHOWS
     logger.error(f"===== [DEBUG] README Generation Starting =====")
