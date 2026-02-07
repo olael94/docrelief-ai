@@ -10,6 +10,7 @@ backend/alembic/__pycache__/
 backend/alembic/versions/__pycache__/
 backend/app/__pycache__/
 backend/app/**/__pycache__/
+backend/.coverage
 
 # Node
 frontend/node_modules/
