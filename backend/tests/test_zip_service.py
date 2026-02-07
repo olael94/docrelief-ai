@@ -71,13 +71,13 @@ class TestExtractZipFile:
         assert os.path.exists(os.path.join(result, "main.py"))
 
     def test_invalid_zip_file(self, tmp_path):
-        """Non-ZIP file raises Exception (ValueError wrapped by outer handler)."""
+        """Non-ZIP file raises ValueError."""
         bad_path = os.path.join(str(tmp_path), "notazip.zip")
         with open(bad_path, 'w') as f:
             f.write("this is not a zip file")
 
         extract_to = os.path.join(str(tmp_path), "extracted")
-        with pytest.raises(Exception, match="Error extracting ZIP file"):
+        with pytest.raises(ValueError, match="not a valid ZIP"):
             extract_zip_file(bad_path, extract_to)
 
     def test_zip_bomb_protection(self, tmp_path):
