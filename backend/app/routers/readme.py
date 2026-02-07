@@ -33,8 +33,7 @@ from app.services.readme_generator import (
     process_zip_readme_generation_async,
 )
 from app.services.session_service import get_or_create_anonymous_session
-from app.services.session_store import session_store
-from app.services.jwt_service import get_session_id_from_token
+from app.services.auth_service import get_github_token_from_auth
 from app.db.session import get_db
 from app.models.generated_readme import GeneratedReadme, ReadmeStatus, InputMethod
 from app.models.user import User
@@ -52,28 +51,6 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/readme", tags=["readme"])
-
-
-def get_github_token_from_auth(authorization: Optional[str]) -> Optional[str]:
-    """
-    Extract GitHub token from JWT in Authorization header.
-
-    Args:
-        authorization: Authorization header value (Bearer <token>)
-
-    Returns:
-        The GitHub token from the session store, or None if not authenticated
-    """
-    if not authorization or not authorization.startswith("Bearer "):
-        return None
-
-    token = authorization.replace("Bearer ", "")
-    session_id = get_session_id_from_token(token)
-
-    if not session_id:
-        return None
-
-    return session_store.get_github_token(session_id)
 
 
 @router.post("/generate", response_model=GenerateReadmeResponse)

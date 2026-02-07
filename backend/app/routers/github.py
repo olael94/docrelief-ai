@@ -4,54 +4,11 @@ import httpx
 import logging
 
 from app.schemas.github import ListReposResponse, RepositoryInfo
-from app.services.session_store import session_store
-from app.services.jwt_service import get_session_id_from_token
+from app.services.auth_service import get_github_token_from_auth
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/github", tags=["github"])
-
-
-def get_github_token_from_auth(authorization: Optional[str]) -> str:
-    """
-    Extract GitHub token from JWT in Authorization header.
-    
-    Args:
-        authorization: Authorization header value (Bearer <token>)
-        
-    Returns:
-        The GitHub token from the session store
-        
-    Raises:
-        HTTPException: If not authenticated or session expired
-    """
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated. Please login with GitHub first.",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-    
-    token = authorization.replace("Bearer ", "")
-    session_id = get_session_id_from_token(token)
-    
-    if not session_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token. Please login again.",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-    
-    github_token = session_store.get_github_token(session_id)
-    
-    if not github_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Session expired. Please login again.",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-    
-    return github_token
 
 
 @router.get("/repos", response_model=ListReposResponse)
@@ -74,7 +31,7 @@ async def list_repositories(authorization: Optional[str] = Header(None)):
     logger.info("[GitHub Repos] Starting repository listing request")
     
     # Get GitHub token from session (NOT from frontend)
-    github_token = get_github_token_from_auth(authorization)
+    github_token = get_github_token_from_auth(authorization, required=True)
     
     try:
         all_repos: List[RepositoryInfo] = []
