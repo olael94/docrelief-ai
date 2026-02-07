@@ -39,6 +39,7 @@ class GeneratedReadme(Base):
     was_downloaded = Column(Boolean, default=False, nullable=False)
     commit_url = Column(Text, nullable=True)
     commit_sha = Column(String, nullable=True, index=True) # This will store the commit SHA for cacheing purposes
+    branch = Column(String, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     

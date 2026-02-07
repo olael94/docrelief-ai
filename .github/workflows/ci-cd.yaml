@@ -37,8 +37,6 @@ jobs:
       run: pytest
 
   build-and-push:
-    if: github.event_name == 'push'
-    needs: backend-tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
