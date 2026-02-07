@@ -62,6 +62,8 @@ def extract_zip_file(zip_path: str, extract_to: str) -> str:
             logger.info(f"[ZIP Extract] Extracted {len(extracted_items)} items to {extract_to}")
             return extract_to
             
+    except ValueError:
+        raise
     except zipfile.BadZipFile:
         raise ValueError(f"Invalid or corrupted ZIP file: {zip_path}")
     except Exception as e:
@@ -91,11 +93,11 @@ def detect_language_from_files(config_files: Dict[str, str], main_files: Dict[st
         "C#": [".cs", ".csproj"],
     }
     
-    # Check config files first
+    # Check config files first (match exact filenames only, not extensions)
     for file_path in config_files.keys():
         file_name = os.path.basename(file_path).lower()
         for lang, indicators in language_indicators.items():
-            if any(indicator.lower() in file_name for indicator in indicators):
+            if any(file_name == indicator.lower() for indicator in indicators if not indicator.startswith(".")):
                 logger.debug(f"[Language Detection] Detected {lang} from config file: {file_path}")
                 return lang
     
