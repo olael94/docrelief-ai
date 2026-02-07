@@ -108,6 +108,8 @@ async def generate_readme(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=str(e)
             )
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(f"[Access Check] Exception: {str(e)}")
             error_msg = str(e)
