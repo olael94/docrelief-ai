@@ -1,4 +1,5 @@
-name: Build and Push Backend/Frontend Images
+name: CD - Build, Push and Deploy
+
 on:
   push:
     branches:
@@ -6,7 +7,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # Base image namespace in the registry, e.g. ghcr.io/<owner>/<repo>
   IMAGE_NAMESPACE: ${{ github.repository }}
 
 jobs:
