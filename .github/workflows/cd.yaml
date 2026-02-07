@@ -1,41 +1,15 @@
-name: Build and Push Backend/Frontend Images
+name: CD - Build, Push and Deploy
+
 on:
   push:
-    branches:
-      - main
-  pull_request:
     branches:
       - main
 
 env:
   REGISTRY: ghcr.io
-  # Base image namespace in the registry, e.g. ghcr.io/<owner>/<repo>
   IMAGE_NAMESPACE: ${{ github.repository }}
 
 jobs:
-  backend-tests:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v5
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip'
-        cache-dependency-path: backend/requirements.txt
-
-    - name: Install dependencies
-      run: pip install -r requirements.txt
-
-    - name: Run tests
-      run: pytest
-
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
