@@ -24,6 +24,7 @@ class SessionStore:
     
     def __init__(self, default_ttl_hours: int = 24):
         self._store: Dict[str, Dict[str, Any]] = {}
+        self._oauth_states: Dict[str, datetime] = {}  # For CSRF protection
         self._lock = threading.Lock()
         self._default_ttl = timedelta(hours=default_ttl_hours)
         logger.info(f"[SessionStore] Initialized with TTL of {default_ttl_hours} hours")
@@ -153,6 +154,54 @@ class SessionStore:
         with self._lock:
             return len(self._store)
 
+    def store_oauth_state(self, state: str, ttl_minutes: int = 10):
+        """
+        Store OAuth state token temporarily for CSRF protection.
+
+        Args:
+            state: The state token
+            ttl_minutes: Time to live in minutes (default: 10)
+        """
+        expires_at = datetime.utcnow() + timedelta(minutes=ttl_minutes)
+        with self._lock:
+            self._oauth_states[state] = expires_at
+            logger.debug(f"[SessionStore] Stored OAuth state token (expires in {ttl_minutes}m)")
+
+    def validate_oauth_state(self, state: str) -> bool:
+        """
+        Validate OAuth state token for CSRF protection.
+
+        Args:
+            state: The state token to validate
+
+        Returns:
+            True if valid and not expired, False otherwise
+        """
+        with self._lock:
+            if state not in self._oauth_states:
+                logger.warning("[SessionStore] OAuth state not found")
+                return False
+
+            # Check expiration
+            if datetime.utcnow() > self._oauth_states[state]:
+                logger.warning("[SessionStore] OAuth state expired")
+                del self._oauth_states[state]
+                return False
+
+            logger.debug("[SessionStore] OAuth state validated successfully")
+            return True
+
+    def remove_oauth_state(self, state: str):
+        """
+        Remove used OAuth state token.
+
+        Args:
+            state: The state token to remove
+        """
+        with self._lock:
+            if state in self._oauth_states:
+                del self._oauth_states[state]
+                logger.debug("[SessionStore] Removed used OAuth state")
 
 # Global session store instance
 session_store = SessionStore()

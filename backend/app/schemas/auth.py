@@ -8,6 +8,7 @@ from typing import Optional, Dict, Any
 class GitHubAuthorizationResponse(BaseModel):
     """Response containing the GitHub authorization URL."""
     authorization_url: str
+    state: str  # CSRF protection state token
 
 
 class GitHubCallbackError(BaseModel):

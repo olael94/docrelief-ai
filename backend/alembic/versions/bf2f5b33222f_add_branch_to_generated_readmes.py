@@ -1,7 +1,7 @@
 """Add branch to generated_readmes
 
 Revision ID: bf2f5b33222f
-Revises: a2c1f635a96e
+Revises: 64d13f292001
 Create Date: 2026-02-07 18:39:09.334992
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'bf2f5b33222f'
-down_revision: Union[str, None] = 'a2c1f635a96e'
+down_revision: Union[str, None] = '64d13f292001'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
