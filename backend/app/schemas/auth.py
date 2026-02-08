@@ -30,3 +30,8 @@ class AuthStatusResponse(BaseModel):
     """Response for authentication status check."""
     authenticated: bool
     user: Optional[Dict[str, Any]] = None
+
+class OAuthExchangeRequest(BaseModel):
+    """Request body for exchanging OAuth code for token."""
+    code: str
+    state: str

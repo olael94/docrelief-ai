@@ -88,4 +88,57 @@ export const updateReadmeDownloaded = async (readmeId) => {
     }
 };
 
+// GitHub OAuth Functions
+export const initiateGitHubOAuth = async () => {
+    try {
+        const response = await api.get('/api/auth/github/authorize');
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.detail || 'Failed to initiate GitHub OAuth';
+        throw new Error(errorMessage);
+    }
+};
+
+export const exchangeOAuthCode = async (code, state) => {
+    try {
+        const response = await api.post('/api/auth/github/exchange', {
+            code,
+            state
+        });
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.detail || 'Failed to complete GitHub authentication';
+        throw new Error(errorMessage);
+    }
+};
+
+export const getAuthStatus = async (token) => {
+    try {
+        const response = await api.get('/api/auth/github/status', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.detail || 'Failed to check authentication status';
+        throw new Error(errorMessage);
+    }
+};
+
+export const logoutGitHub = async (token) => {
+    try {
+        const response = await api.post('/api/auth/github/logout', {}, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        // Logout can fail silently - not critical
+        console.error('Logout error:', error);
+        return null;
+    }
+};
+
 export default api;

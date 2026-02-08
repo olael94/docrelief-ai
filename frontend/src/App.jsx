@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import PreviewPage from './pages/PreviewPage';
 import LoadingPage from './pages/LoadingPage';
 import TeamPage from './pages/TeamPage';
+import GitHubCallback from './pages/GitHubCallback';
 import {healthCheck} from './services/api';
 import {useState, useEffect} from 'react';
 import Footer from './components/Footer';
@@ -38,6 +39,7 @@ function App() {
                 <div className="flex-grow">
                     <Routes>
                         <Route path="/" element={<LandingPage/>}/>
+                        <Route path="/auth/github/callback" element={<GitHubCallback/>}/>
                         <Route path="/preview" element={<PreviewPage/>}/>
                         <Route path="/preview/:id" element={<PreviewPage/>}/>
                         <Route path="/loading" element={<LoadingPage/>}/>

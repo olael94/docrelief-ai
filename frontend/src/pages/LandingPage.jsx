@@ -1,4 +1,5 @@
-import {useState} from "react";
+import {useState, useEffect} from "react";
+import {useSearchParams} from "react-router-dom";
 import TabBar from "../components/TabBar";
 import PublicRepoTab from "../components/PublicRepoTab";
 import UploadTab from "../components/UploadTab";
@@ -6,6 +7,7 @@ import PrivateRepoTab from "../components/PrivateRepoTab";
 import HowItWorks from "../components/HowItWorks";
 
 export default function LandingPage() {
+    const [searchParams, setSearchParams] = useSearchParams(); // For reading URL query parameters
     const [activeTab, setActiveTab] = useState('public-repo');
 
     const tabs = [
@@ -13,6 +15,20 @@ export default function LandingPage() {
         {id: 'upload-files', label: 'Upload Files'},
         {id: 'private-repo', label: 'Private Repo'},
     ];
+
+    // Read tab from URL on mount and when URL changes
+    useEffect(() => {
+        const tabParam = searchParams.get('tab');
+        if (tabParam && tabs.find(t => t.id === tabParam)) {
+            setActiveTab(tabParam);
+        }
+    }, [searchParams]);
+
+    // Update URL when tab changes
+    const handleTabChange = (newTab) => {
+        setActiveTab(newTab);
+        setSearchParams({tab: newTab});
+    };
 
     return (
         <>
@@ -32,7 +48,7 @@ export default function LandingPage() {
                     className="w-[400px] md:w-[921px] h-auto md:h-[765px] pt-16 md:px-5 rounded-4xl shadow-2xl flex flex-col items-center justify-center bg-white gap-8 py-8">
                     <h1 className="font-poppins text-4xl font-bold">Generate README</h1>
                     <div className="w-[340px] md:w-[660px]">
-                        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} tabs={tabs}/>
+                        <TabBar activeTab={activeTab} setActiveTab={handleTabChange} tabs={tabs}/>
                     </div>
                     <div className="min-h-100">
                         {activeTab === 'public-repo' && <PublicRepoTab/>}
