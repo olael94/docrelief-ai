@@ -6,6 +6,7 @@ from fastapi import (
     BackgroundTasks,
     UploadFile,
     File,
+    Header,
 )
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,6 +33,7 @@ from app.services.readme_generator import (
     process_zip_readme_generation_async,
 )
 from app.services.session_service import get_or_create_anonymous_session
+from app.services.auth_service import get_github_token_from_auth
 from app.db.session import get_db
 from app.models.generated_readme import GeneratedReadme, ReadmeStatus, InputMethod
 from app.models.user import User
@@ -53,17 +55,19 @@ router = APIRouter(prefix="/api/readme", tags=["readme"])
 
 @router.post("/generate", response_model=GenerateReadmeResponse)
 async def generate_readme(
-    request: GenerateReadmeRequest, db: AsyncSession = Depends(get_db)
+    request: GenerateReadmeRequest, db: AsyncSession = Depends(get_db),
+    authorization: Optional[str] = Header(None)
 ):
     """
-    Initiates asynchronous README generation for a GitHub repository (public or private with API key).
+    Initiates asynchronous README generation for a GitHub repository (public or private).
 
-    Receives a GitHub URL, verifies if the repository is accessible,
-    creates a database record and returns an ID for status checking.
-
+    For private repositories, authentication is required via:
+    1. JWT token in Authorization header (recommended - GitHub token stored server-side)
+    2. github_api_key in request body (legacy support)
     Args:
         request: Object with the GitHub URL, optional session_id, and optional github_api_key
         db: Database session
+authorization: Optional Bearer token from Authorization header
 
     Returns:
         GenerateReadmeResponse: Contains UUID and status
@@ -72,8 +76,8 @@ async def generate_readme(
         HTTPException: In case of validation, access or processing errors
     """
     github_url = request.github_url
-    github_api_key = request.github_api_key
-
+    # Try to get token from JWT first (more secure), fallback to body
+    github_api_key = get_github_token_from_auth(authorization) or request.github_api_key
     # Log the raw input to see if it's being truncated - USE ERROR LEVEL TO ENSURE IT SHOWS
     logger.error(f"===== [DEBUG] README Generation Starting =====")
     logger.error(f"[DEBUG] Raw github_url from request: '{github_url}'")

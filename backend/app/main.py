@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from app.db.session import get_db
-from app.routers import readme
+from app.routers import readme, auth, github
 import logging
 import sys
 
@@ -40,6 +40,8 @@ app.add_middleware(
 )
 
 app.include_router(readme.router)
+app.include_router(auth.router, prefix="/api/auth/github", tags=["GitHub OAuth"])
+app.include_router(github.router)
 
 @app.get("/")
 async def read_root():
