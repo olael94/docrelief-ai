@@ -17,6 +17,7 @@ import httpx
 
 from app.config import settings
 from app.schemas.auth import GitHubAuthorizationResponse, AuthStatusResponse
+from app.schemas import auth as schemas
 from app.services.github_oauth_service import generate_authorization_url, exchange_code_for_token
 from app.services.session_store import session_store
 from app.services.jwt_service import create_access_token, get_session_id_from_token
@@ -100,64 +101,70 @@ async def github_callback(
     state: str = Query(None, description="CSRF protection state token"),
     error: str = Query(None, description="Error code if authorization failed"),
     error_description: str = Query(None, description="Error description"),
-    db: AsyncSession = Depends(get_db)
 ):
     """
-    GitHub OAuth callback endpoint.
+    GitHub OAuth callback endpoint - receives redirect from GitHub.
 
-    This endpoint is called by GitHub after the user authorizes (or denies) access.
-
-    Security flow:
-    1. Validate CSRF state parameter
-    2. Exchange authorization code for GitHub access token
-    3. Fetch user info from GitHub
-    4. Save/update user in database with encrypted token
-    5. Store GitHub token in memory (NOT sent to frontend)
-    6. Create JWT with only session ID
-    7. Redirect to frontend with JWT (not the GitHub token)
+    This endpoint simply forwards the code and state to the frontend.
+    The frontend will then call /exchange to complete the OAuth flow.
     """
-    # Handle error from GitHub (user denied access or other error)
+    # Handle error from GitHub (user denied access)
     if error:
         logger.warning(f"[GitHub OAuth] Authorization error: {error} - {error_description}")
         error_params = urlencode({
-            "github_error": error,
-            "github_error_description": error_description or "Authorization was denied"
+            "error": error,
+            "error_description": error_description or "Authorization was denied"
         })
-        return RedirectResponse(url=f"{settings.FRONTEND_URL}?{error_params}")
+        return RedirectResponse(url=f"{settings.FRONTEND_URL}/auth/github/callback?{error_params}")
 
-    # Validate code is present
-    if not code:
-        logger.error("[GitHub OAuth] No authorization code received")
+    # Validate code and state are present
+    if not code or not state:
+        logger.error("[GitHub OAuth] Missing code or state parameter")
         error_params = urlencode({
-            "github_error": "no_code",
-            "github_error_description": "No authorization code received from GitHub"
+            "error": "missing_params",
+            "error_description": "Missing authorization code or state parameter"
         })
-        return RedirectResponse(url=f"{settings.FRONTEND_URL}?{error_params}")
+        return RedirectResponse(url=f"{settings.FRONTEND_URL}/auth/github/callback?{error_params}")
 
+    # Redirect to frontend with code and state
+    # Frontend will call /exchange endpoint to complete the flow
+    params = urlencode({"code": code, "state": state})
+    return RedirectResponse(url=f"{settings.FRONTEND_URL}/auth/github/callback?{params}")
+
+
+@router.post("/exchange")
+async def exchange_oauth_code(
+    request: schemas.OAuthExchangeRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Exchange OAuth code for user data and JWT token.
+
+    This endpoint is called by the frontend after GitHub redirects back.
+    It performs the full OAuth flow and returns JSON with user data and JWT.
+    """
     # Validate CSRF state parameter
-    if not state or not session_store.validate_oauth_state(state):
+    if not request.state or not session_store.validate_oauth_state(request.state):
         logger.error("[GitHub OAuth] Invalid or missing state parameter - CSRF attack prevented")
-        error_params = urlencode({
-            "github_error": "invalid_state",
-            "github_error_description": "CSRF validation failed. Please try again."
-        })
-        return RedirectResponse(url=f"{settings.FRONTEND_URL}?{error_params}")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid state parameter. Please try connecting again."
+        )
 
     # Remove used state token
-    session_store.remove_oauth_state(state)
+    session_store.remove_oauth_state(request.state)
 
     # Check if OAuth is configured
     if not settings.GITHUB_CLIENT_ID or not settings.GITHUB_CLIENT_SECRET:
         logger.error("[GitHub OAuth] GitHub OAuth not configured")
-        error_params = urlencode({
-            "github_error": "not_configured",
-            "github_error_description": "GitHub OAuth is not configured on the server"
-        })
-        return RedirectResponse(url=f"{settings.FRONTEND_URL}?{error_params}")
+        raise HTTPException(
+            status_code=500,
+            detail="GitHub OAuth is not configured on the server"
+        )
 
     try:
         # 1. Exchange code for GitHub access token
-        github_token = await exchange_code_for_token(code)
+        github_token = await exchange_code_for_token(request.code)
 
         # 2. Fetch user info from GitHub
         user_info = await get_github_user_info(github_token)
@@ -167,7 +174,10 @@ async def github_callback(
         email = user_info.get('email') if user_info else None
 
         if not github_username:
-            raise Exception("Failed to retrieve GitHub username")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to retrieve GitHub username"
+            )
 
         # Check if user exists
         result = await db.execute(
@@ -201,18 +211,28 @@ async def github_callback(
         # 5. Create JWT with only the session ID
         jwt_token = create_access_token(session_id)
 
-        # 6. Redirect to frontend with JWT (NOT the GitHub token)
+        # 6. Return JSON response with user data and JWT
         logger.info(f"[GitHub OAuth] Successfully authenticated user {github_username}")
-        return RedirectResponse(url=f"{settings.FRONTEND_URL}?token={jwt_token}")
-        
+        return {
+            "user": {
+                "github_username": user_info.get('login'),
+                "email": user_info.get('email'),
+                "avatar_url": user_info.get('avatar_url'),
+                "name": user_info.get('name')
+            },
+            "token": jwt_token,
+            "message": "Successfully authenticated with GitHub"
+        }
+
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         logger.error(f"[GitHub OAuth] Token exchange failed: {str(e)}")
-        error_params = urlencode({
-            "github_error": "token_exchange_failed",
-            "github_error_description": str(e)
-        })
-        return RedirectResponse(url=f"{settings.FRONTEND_URL}?{error_params}")
-
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to complete GitHub authentication: {str(e)}"
+        )
 
 @router.get("/status", response_model=AuthStatusResponse)
 async def auth_status(authorization: Optional[str] = Header(None)):
