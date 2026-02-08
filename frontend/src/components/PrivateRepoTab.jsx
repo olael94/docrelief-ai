@@ -1,5 +1,6 @@
 import {useState, useEffect} from 'react';
 import toast from 'react-hot-toast';
+import { CheckCircle2, Github } from 'lucide-react';
 import { initiateGitHubOAuth, logoutGitHub } from '../services/api';
 
 export default function PrivateRepoTab() {
@@ -87,11 +88,7 @@ export default function PrivateRepoTab() {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                             <div className="text-green-600">
-                                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd"
-                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                          clipRule="evenodd"/>
-                                </svg>
+                                <CheckCircle2 className="w-6 h-6" />
                             </div>
                             <div>
                                 <p className="font-semibold text-green-900">GitHub Connected</p>
@@ -142,30 +139,15 @@ export default function PrivateRepoTab() {
                     {/* Checkmark List */}
                     <div className="space-y-3 text-left">
                         <div className="flex items-start space-x-3">
-                            <svg className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fillRule="evenodd"
-                                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                      clipRule="evenodd"/>
-                            </svg>
+                            <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
                             <p className="text-gray-700">Private repos require authentication to access code</p>
                         </div>
                         <div className="flex items-start space-x-3">
-                            <svg className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fillRule="evenodd"
-                                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                      clipRule="evenodd"/>
-                            </svg>
+                            <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
                             <p className="text-gray-700">We need permission to read your repo structure and files</p>
                         </div>
                         <div className="flex items-start space-x-3">
-                            <svg className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fillRule="evenodd"
-                                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                      clipRule="evenodd"/>
-                            </svg>
+                            <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
                             <p className="text-gray-700">You can revoke access anytime from GitHub settings</p>
                         </div>
                     </div>
