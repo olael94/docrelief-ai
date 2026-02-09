@@ -47,7 +47,7 @@ jobs:
         file: ./frontend/Dockerfile
         push: true
         build-args: |
-          VITE_API_URL=${{ vars.VITE_API_URL || 'http://localhost:8000' }}
+          VITE_BACKEND_URL=${{ vars.VITE_BACKEND_URL || 'http://localhost:8000' }}
         tags: |
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-frontend:latest
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-frontend:${{ github.sha }}
