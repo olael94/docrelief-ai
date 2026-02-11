@@ -45,7 +45,7 @@ export default function LandingPage() {
                 <HowItWorks/>
                 {/* Tabbed Interface Card */}
                 <div
-                    className="w-[400px] md:w-[921px] h-auto md:h-[765px] pt-16 md:px-5 rounded-4xl shadow-2xl flex flex-col items-center justify-center bg-white gap-8 py-8">
+                    className="w-[400px] md:w-[921px] h-auto pt-16 md:px-5 rounded-4xl shadow-2xl flex flex-col items-center bg-white gap-8 py-8">
                     <h1 className="font-poppins text-4xl font-bold">Generate README</h1>
                     <div className="w-[340px] md:w-[660px]">
                         <TabBar activeTab={activeTab} setActiveTab={handleTabChange} tabs={tabs}/>

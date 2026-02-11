@@ -70,3 +70,47 @@ class ListReposResponse(BaseModel):
                 ]
             }
         }
+
+class BranchInfo(BaseModel):
+    """Schema for a single branch information"""
+    name: str
+    is_default: bool
+    has_readme: bool
+    commit_sha: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "main",
+                "is_default": True,
+                "has_readme": True,
+                "commit_sha": "abc123def456..."
+            }
+        }
+
+
+class ListBranchesResponse(BaseModel):
+    """Schema for listing repository branches response"""
+    branches: List[BranchInfo]
+    default_branch: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "branches": [
+                    {
+                        "name": "main",
+                        "is_default": True,
+                        "has_readme": True,
+                        "commit_sha": "abc123def456..."
+                    },
+                    {
+                        "name": "develop",
+                        "is_default": False,
+                        "has_readme": False,
+                        "commit_sha": "def456abc123..."
+                    }
+                ],
+                "default_branch": "main"
+            }
+        }

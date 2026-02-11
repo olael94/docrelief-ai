@@ -236,6 +236,7 @@ def _fetch_repository_content_sync(
     repo_info: Optional[Dict] = None,
     max_files: int = 50,
     github_api_key: Optional[str] = None,
+    branch: Optional[str] = None,
 ) -> Dict[str, any]:
     """
     Synchronous helper function to fetch repository content using PyGithub.
@@ -615,6 +616,7 @@ async def fetch_repository_content(
     repo_info: Optional[Dict] = None,
     max_files: int = 50,
     github_api_key: Optional[str] = None,
+    branch: Optional[str] = None,
 ) -> Dict[str, any]:
     """
     Fetches GitHub repository content, including source code and configuration files.

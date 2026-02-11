@@ -168,13 +168,18 @@ authorization: Optional Bearer token from Authorization header
         # 3. Get or create session
         session = await get_or_create_anonymous_session(db, request.session_id)
 
-        # 4. Create GeneratedReadme record with PENDING status
+        # 4. Determine input method based on authentication
+        # If github_api_key is provided (from Authorization header or request body),
+        # it means this is a private repo accessed via GitHub OAuth
+        input_method = InputMethod.GITHUB_AUTH if github_api_key else InputMethod.PUBLIC_URL
+
+        # 5. Create GeneratedReadme record with PENDING status
         readme_record = GeneratedReadme(
             session_id=session.id,
             user_id=None,  # Anonymous for now
             repo_name=repo_name,
             repo_url=github_url,
-            input_method=InputMethod.PUBLIC_URL,
+            input_method=input_method,
             status=ReadmeStatus.PENDING.value,  # Use .value to get the string value
             readme_content=None,
             was_committed=False,
@@ -186,10 +191,10 @@ authorization: Optional Bearer token from Authorization header
         await db.refresh(readme_record)
 
         logger.info(
-            f"[README Generation] Created record {readme_record.id} with PENDING status"
+            f"[README Generation] Created record {readme_record.id} with PENDING status and input_method={input_method.value}"
         )
 
-        # 5. Start background task (pass API key if provided)
+        # 6. Start background task (pass API key if provided)
         asyncio.create_task(
             process_readme_generation_async(
                 readme_record.id, github_url, github_api_key
@@ -199,7 +204,7 @@ authorization: Optional Bearer token from Authorization header
             f"[README Generation] Started background task for {readme_record.id}"
         )
 
-        # 6. Return UUID and status immediately
+        # 7. Return UUID and status immediately
         # status is already a string from the database
         status_str = (
             str(readme_record.status)
