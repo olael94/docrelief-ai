@@ -126,6 +126,7 @@ class ReadmeDetailResponse(BaseModel):
     readme_content: Optional[str] = None
     repo_name: str
     repo_url: Optional[str] = None
+    input_method: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

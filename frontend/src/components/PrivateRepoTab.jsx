@@ -9,6 +9,7 @@ import RepoCard from './RepoCard';
 export default function PrivateRepoTab() {
     const [githubUser, setGithubUser] = useState(null);
     const [isConnecting, setIsConnecting] = useState(false);
+    const [isDisconnecting, setIsDisconnecting] = useState(false);
     const navigate = useNavigate();
 
     // NEW: Repository selection state
@@ -22,19 +23,6 @@ export default function PrivateRepoTab() {
     const [loadingBranch, setLoadingBranch] = useState(false); // Loading state for fetching branch info
 
     // Check for GitHub user on mount
-    useEffect(() => {
-        const storedUser = localStorage.getItem('github_user');
-        if (storedUser) {
-            try {
-                setGithubUser(JSON.parse(storedUser));
-            } catch (error) {
-                console.error('Failed to parse GitHub user:', error);
-                localStorage.removeItem('github_user');
-            }
-        }
-    }, []);
-
-    // Existing useEffect that checks for stored user
     useEffect(() => {
         const storedUser = localStorage.getItem('github_user');
         if (storedUser) {
@@ -70,8 +58,16 @@ export default function PrivateRepoTab() {
 
             console.log(`Loaded ${data.total_count} repositories`);
         } catch (error) {
-            // Show error toast (backend provides the message)
-            toast.error(error.message);
+            // If session is expired/invalid, clear auth and return to connect screen
+            if (error.message.includes('Session expired') || error.message.includes('Invalid or expired') || error.message.includes('Not authenticated')) {
+                localStorage.removeItem('github_user');
+                localStorage.removeItem('github_token');
+                sessionStorage.removeItem('github_oauth_state');
+                setGithubUser(null);
+                toast.error('Session expired. Please reconnect your GitHub account.');
+            } else {
+                toast.error(error.message);
+            }
             console.error('Failed to fetch repositories:', error);
         } finally {
             setLoading(false); // Hide loading spinner
@@ -191,6 +187,7 @@ export default function PrivateRepoTab() {
     };
 
     const handleDisconnect = async () => {
+        setIsDisconnecting(true);
         try {
             // Get token before removing it
             const token = localStorage.getItem('github_token');
@@ -227,6 +224,8 @@ export default function PrivateRepoTab() {
             sessionStorage.removeItem('github_oauth_state');
             setGithubUser(null);
             toast.success('Disconnected from DocRelief AI');
+        } finally {
+            setIsDisconnecting(false);
         }
     };
 
@@ -248,9 +247,10 @@ export default function PrivateRepoTab() {
                         </div>
                         <button
                             onClick={handleDisconnect}
-                            className="text-sm text-gray-600 hover:text-gray-900 underline"
+                            disabled={isDisconnecting}
+                            className="text-sm text-gray-600 hover:text-gray-900 underline disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Disconnect
+                            {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
                         </button>
                     </div>
                 </div>

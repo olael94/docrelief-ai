@@ -215,6 +215,7 @@ async def exchange_oauth_code(
         logger.info(f"[GitHub OAuth] Successfully authenticated user {github_username}")
         return {
             "user": {
+                "id": user.id,
                 "github_username": user_info.get('login'),
                 "email": user_info.get('email'),
                 "avatar_url": user_info.get('avatar_url'),

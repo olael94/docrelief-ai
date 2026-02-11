@@ -2,8 +2,8 @@ import axios from 'axios';
 
 
 // 1. Define the base URL from environment variable
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '192.168.0.174'
-    ? 'http://192.168.0.174:8000'
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8000'
     : import.meta.env.VITE_BACKEND_URL;
 
 const api = axios.create({
@@ -11,6 +11,7 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    timeout: 15000, // 15 second timeout to prevent infinite hangs
 });
 
 // Health check

@@ -34,6 +34,8 @@ from app.services.readme_generator import (
 )
 from app.services.session_service import get_or_create_anonymous_session
 from app.services.auth_service import get_github_token_from_auth
+from app.services.session_store import session_store
+from app.services.jwt_service import get_session_id_from_token
 from app.db.session import get_db
 from app.models.generated_readme import GeneratedReadme, ReadmeStatus, InputMethod
 from app.models.user import User
@@ -168,6 +170,23 @@ authorization: Optional Bearer token from Authorization header
         # 3. Get or create session
         session = await get_or_create_anonymous_session(db, request.session_id)
 
+        # Look up DB user from JWT session so we can store user_id on the record
+        user_id = None
+        if authorization and authorization.startswith("Bearer "):
+            token = authorization.replace("Bearer ", "")
+            sid = get_session_id_from_token(token)
+            if sid:
+                session_data = session_store.get_session(sid)
+                if session_data and session_data.get("user_info"):
+                    github_username = session_data["user_info"].get("login")
+                    if github_username:
+                        user_result = await db.execute(
+                            select(User).where(User.github_username == github_username)
+                        )
+                        found_user = user_result.scalar_one_or_none()
+                        if found_user:
+                            user_id = found_user.id
+
         # 4. Determine input method based on authentication
         # If github_api_key is provided (from Authorization header or request body),
         # it means this is a private repo accessed via GitHub OAuth
@@ -175,16 +194,17 @@ authorization: Optional Bearer token from Authorization header
 
         # 5. Create GeneratedReadme record with PENDING status
         readme_record = GeneratedReadme(
-            session_id=session.id,
-            user_id=None,  # Anonymous for now
-            repo_name=repo_name,
-            repo_url=github_url,
-            input_method=input_method,
-            status=ReadmeStatus.PENDING.value,  # Use .value to get the string value
-            readme_content=None,
-            was_committed=False,
-            was_downloaded=False,
-        )
+                    session_id=session.id,
+                    user_id=user_id,
+                    repo_name=repo_name,
+                    repo_url=github_url,
+                    input_method=input_method,
+                    status=ReadmeStatus.PENDING.value,
+                    readme_content=None,
+                    was_committed=False,
+                    was_downloaded=False,
+                    branch=repo_data.get("default_branch", "main") if github_api_key else None,
+                )
 
         db.add(readme_record)
         await db.commit()
@@ -536,13 +556,14 @@ async def get_readme(readme_uuid: UUID, db: AsyncSession = Depends(get_db)):
 
     # Return the record as JSON
     return ReadmeDetailResponse(
-        id=readme_record.id,
-        status=str(readme_record.status),
-        readme_content=readme_record.readme_content,
-        repo_name=readme_record.repo_name,
-        repo_url=readme_record.repo_url,
-        created_at=readme_record.created_at,
-        updated_at=readme_record.updated_at,
+            id=readme_record.id,
+            status=str(readme_record.status),
+            readme_content=readme_record.readme_content,
+            repo_name=readme_record.repo_name,
+            repo_url=readme_record.repo_url,
+            input_method=readme_record.input_method.value if readme_record.input_method else None,
+            created_at=readme_record.created_at,
+            updated_at=readme_record.updated_at,
     )
 
 
