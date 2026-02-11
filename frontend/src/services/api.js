@@ -2,8 +2,8 @@ import axios from 'axios';
 
 
 // 1. Define the base URL from environment variable
-const API_BASE_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:8000'
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '192.168.0.174'
+    ? 'http://192.168.0.174:8000'
     : import.meta.env.VITE_BACKEND_URL;
 
 const api = axios.create({
@@ -147,6 +147,20 @@ export const logoutGitHub = async (token) => {
     }
 };
 
+export const commitReadme = async (userId, readmeId, commitMessage, extendedDescription = null) => {
+    try {
+        const response = await api.post('/api/readme/commit', {
+            user_id: userId,
+            readme_id: readmeId,
+            commit_message: commitMessage,
+            extended_description: extendedDescription
+        });
+        return response.data;
+    } catch (error) {
+        const errorMessage = error.response?.data?.detail || 'Failed to commit README to GitHub';
+        throw new Error(errorMessage);
+    }
+};
 // ============================================
 // GitHub Repository & Branch Functions
 // ============================================

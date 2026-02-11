@@ -9,6 +9,7 @@ import {healthCheck} from './services/api';
 import {useState, useEffect} from 'react';
 import Footer from './components/Footer';
 import Navbar from './components/Navbar';
+import CommitPage from './pages/CommitPage';
 
 function App() {
     const [status, setStatus] = useState('checking...');
@@ -44,6 +45,7 @@ function App() {
                         <Route path="/preview/:id" element={<PreviewPage/>}/>
                         <Route path="/loading" element={<LoadingPage/>}/>
                         <Route path="/team" element={<TeamPage/>}/>
+                        <Route path="/commit" element={<CommitPage />} />
                     </Routes>
                 </div>
                 <Footer/>

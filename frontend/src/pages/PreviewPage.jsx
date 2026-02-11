@@ -4,9 +4,11 @@ import {generateReadme, getReadme, pollReadmeStatus, updateReadmeDownloaded} fro
 import toast, {Toaster} from 'react-hot-toast';
 import EditorPanel from '../components/EditorPanel.jsx';
 import PreviewPanel from '../components/PreviewPanel.jsx';
+import { useNavigate } from 'react-router-dom';
 
 // Main PreviewPage Component
 const PreviewPage = () => {
+    const navigate = useNavigate();
     // Get readme_id from URL params (passed from Landing Page)
     const params = new URLSearchParams(window.location.search);
     // This will either be the readme ID or 'preview' for local editing
@@ -249,7 +251,18 @@ const PreviewPage = () => {
     };
 
     const handleCommit = () => {
-        alert('GitHub commit functionality will be implemented in a future version');
+        if (!readmeId || readmeId === 'preview') {
+            toast.error('Please generate a README first');
+            return;
+        }
+        navigate('/commit', {
+            state: {
+                readmeId: readmeId,
+                content: content,
+                repoUrl: repoUrl,
+                branch: 'main'
+            }
+        });
     };
 
     const handleChangeRepository = () => {

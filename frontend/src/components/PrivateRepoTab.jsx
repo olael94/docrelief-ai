@@ -5,6 +5,7 @@ import { CheckCircle2, Github, Search, GitBranch } from 'lucide-react';
 import { initiateGitHubOAuth, logoutGitHub, getUserRepositories, getRepositoryBranches, generateReadme } from '../services/api';
 import RepoCard from './RepoCard';
 
+
 export default function PrivateRepoTab() {
     const [githubUser, setGithubUser] = useState(null);
     const [isConnecting, setIsConnecting] = useState(false);
@@ -175,17 +176,15 @@ export default function PrivateRepoTab() {
     const handleConnectGitHub = async () => {
         setIsConnecting(true);
         try {
-            // Get authorization URL and state from backend
-            const {authorization_url, state} = await initiateGitHubOAuth();
-
+            const apiResponse = await initiateGitHubOAuth();
             // Store state in sessionStorage for CSRF validation
-            sessionStorage.setItem('github_oauth_state', state);
+            sessionStorage.setItem('github_oauth_state', apiResponse.state); //added apiResponse.state to backend response fix the undefined bug
 
             // Redirect to GitHub
-            window.location.href = authorization_url;
+            window.location.href = apiResponse.authorization_url;
         } catch (error) {
             // Error message from backend (single source of truth)
-            console.error('Failed to initiate GitHub OAuth:', error);
+            console.error('Failed to initiate GitHub OAuth:', error); 
             toast.error(error.message);
             setIsConnecting(false);
         }
