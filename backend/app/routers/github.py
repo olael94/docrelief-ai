@@ -3,7 +3,7 @@ from typing import List, Optional
 import httpx
 import logging
 
-from app.schemas.github import ListReposResponse, RepositoryInfo
+from app.schemas.github import ListReposResponse, RepositoryInfo, ListBranchesResponse, BranchInfo
 from app.services.auth_service import get_github_token_from_auth
 
 logger = logging.getLogger(__name__)
@@ -132,6 +132,112 @@ async def list_repositories(authorization: Optional[str] = Header(None)):
         )
     except Exception as e:
         logger.error(f"[GitHub Repos] Unexpected error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected error: {str(e)}"
+        )
+
+@router.get("/repos/{owner}/{repo}/branches", response_model=ListBranchesResponse)
+async def get_repository_branches(
+    owner: str,
+    repo: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get branches for a specific repository.
+    Returns branch list with default branch marked and README detection.
+    """
+    logger.info(f"[GitHub Branches] Fetching branches for {owner}/{repo}")
+
+    # Get GitHub token from session
+    github_token = get_github_token_from_auth(authorization, required=True)
+
+    try:
+        async with httpx.AsyncClient() as client:
+            # 1. Get repository info to find default branch
+            repo_url = f"https://api.github.com/repos/{owner}/{repo}"
+            repo_response = await client.get(
+                repo_url,
+                headers={
+                    "Authorization": f"token {github_token}",
+                    "Accept": "application/vnd.github.v3+json"
+                },
+                timeout=30.0
+            )
+
+            if repo_response.status_code == 401:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid or expired GitHub token"
+                )
+
+            if repo_response.status_code == 404:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Repository not found"
+                )
+
+            repo_response.raise_for_status()
+            repo_data = repo_response.json()
+            default_branch = repo_data.get("default_branch", "main")
+
+            # 2. Get all branches
+            branches_url = f"https://api.github.com/repos/{owner}/{repo}/branches"
+            branches_response = await client.get(
+                branches_url,
+                headers={
+                    "Authorization": f"token {github_token}",
+                    "Accept": "application/vnd.github.v3+json"
+                },
+                timeout=30.0
+            )
+
+            branches_response.raise_for_status()
+            branches_data = branches_response.json()
+
+            # 3. Check README.md existence for each branch
+            branches = []
+            for branch in branches_data:
+                branch_name = branch["name"]
+                commit_sha = branch["commit"]["sha"]
+
+                # Check if README exists on this branch
+                readme_url = f"https://api.github.com/repos/{owner}/{repo}/contents/README.md?ref={branch_name}"
+                readme_response = await client.get(
+                    readme_url,
+                    headers={
+                        "Authorization": f"token {github_token}",
+                        "Accept": "application/vnd.github.v3+json"
+                    },
+                    timeout=10.0
+                )
+
+                has_readme = readme_response.status_code == 200
+
+                branches.append({
+                    "name": branch_name,
+                    "is_default": branch_name == default_branch,
+                    "has_readme": has_readme,
+                    "commit_sha": commit_sha
+                })
+
+            logger.info(f"[GitHub Branches] Found {len(branches)} branches for {owner}/{repo}")
+
+            return ListBranchesResponse(
+                branches=[BranchInfo(**branch) for branch in branches],
+                default_branch=default_branch
+            )
+
+    except HTTPException:
+        raise
+    except httpx.HTTPError as e:
+        logger.error(f"[GitHub Branches] HTTP error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Connection error with GitHub API: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"[GitHub Branches] Unexpected error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Unexpected error: {str(e)}"

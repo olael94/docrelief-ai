@@ -22,11 +22,17 @@ export const healthCheck = async () => {
 
 // Generate README
 export const generateReadme = async (githubUrl, sessionId = null) => {
-    // Using 'api' automatically prepends the baseURL
-    const response = await api.post('/api/readme/generate', {
-        github_url: githubUrl,
-        session_id: sessionId
-    });
+    // Build request config
+    const config = sessionId ? {
+        headers: {
+            'Authorization': `Bearer ${sessionId}`
+        }
+    } : {};
+
+    const response = await api.post('/api/readme/generate', 
+        { github_url: githubUrl },
+        config
+    );
     return response.data;
 };
 
@@ -155,4 +161,75 @@ export const commitReadme = async (userId, readmeId, commitMessage, extendedDesc
         throw new Error(errorMessage);
     }
 };
+// ============================================
+// GitHub Repository & Branch Functions
+// ============================================
+
+/**
+ * Fetch all repositories the authenticated user has access to.
+ * Calls GET /api/github/repos with the user's JWT token.
+ *
+ * @returns {Promise} Object with total_count and repositories array
+ * @throws {Error} If token is invalid/expired or request fails
+ */
+export const getUserRepositories = async () => {
+    try {
+        // Get the JWT token from localStorage (set during OAuth)
+        const token = localStorage.getItem('github_token');
+
+        if (!token) {
+            throw new Error('No GitHub token found. Please connect your GitHub account.');
+        }
+
+        // Call backend with Authorization header
+        const response = await api.get('/api/github/repos', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        // Returns { total_count: number, repositories: [...] }
+        return response.data;
+    } catch (error) {
+        // Extract error message from backend response
+        const errorMessage = error.response?.data?.detail || 'Failed to fetch repositories';
+        throw new Error(errorMessage);
+    }
+};
+
+/**
+ * Fetch branches for a specific repository.
+ * Used to get default branch info and check if README exists.
+ * Calls GET /api/github/repos/{owner}/{repo}/branches with the user's JWT token.
+ *
+ * @param {string} owner - Repository owner (e.g., "olael94")
+ * @param {string} repo - Repository name (e.g., "docrelief-ai")
+ * @returns {Promise} Object with branches array and default_branch name
+ * @throws {Error} If token is invalid, repo not found, or request fails
+ */
+export const getRepositoryBranches = async (owner, repo) => {
+    try {
+        // Get the JWT token from localStorage
+        const token = localStorage.getItem('github_token');
+
+        if (!token) {
+            throw new Error('No GitHub token found. Please connect your GitHub account.');
+        }
+
+        // Call backend with Authorization header
+        const response = await api.get(`/api/github/repos/${owner}/${repo}/branches`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        // Returns { branches: [...], default_branch: "main" }
+        return response.data;
+    } catch (error) {
+        // Extract error message from backend response
+        const errorMessage = error.response?.data?.detail || 'Failed to fetch branches';
+        throw new Error(errorMessage);
+    }
+};
+
 export default api;
