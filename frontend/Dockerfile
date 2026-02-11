@@ -3,9 +3,6 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Accept build arguments for Vite environment variables
-ARG VITE_BACKEND_URL
-ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
 
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
