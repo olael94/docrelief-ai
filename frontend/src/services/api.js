@@ -2,9 +2,7 @@ import axios from 'axios';
 
 
 // 1. Define the base URL from environment variable
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8000'
-    : import.meta.env.VITE_BACKEND_URL;
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
 const api = axios.create({
     baseURL: API_BASE_URL,
