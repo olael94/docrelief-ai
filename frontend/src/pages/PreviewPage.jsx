@@ -290,7 +290,7 @@ const PreviewPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:h-full">
                     {/* Editor Panel - independently scrollable */}
                     <div
-                        className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[600px] max-h-[600px] md:h-full">
+                        className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[700px] max-h-[80vh] md:h-full">
                         <EditorPanel
                             content={content}
                             onChange={setContent}
@@ -302,7 +302,7 @@ const PreviewPage = () => {
 
                     {/* Preview Panel - independently scrollable */}
                     <div
-                        className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[600px] max-h-[600px] md:h-full">
+                        className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[700px] max-h-[80vh] md:h-full">
                         <PreviewPanel
                             content={content}
                             isLoading={isLoading || isRegenerating}

@@ -46,10 +46,10 @@ export default function CommitSuccessModal({ isOpen, onClose, commitData }) {
   };
 
   const handleShareLinkedIn = () => {
-    const appUrl = window.location.origin;
-    const shareText = `I just used DocRelief AI to generate a professional README! Check it out: ${appUrl}`;
-    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(appUrl)}&summary=${encodeURIComponent(shareText)}`;
-    window.open(linkedInUrl, '_blank', 'width=600,height=400');
+    const url = encodeURIComponent(commitData?.commit_url || commitData?.repo_url || window.location.origin);
+    const title = encodeURIComponent('My New README');
+    const summary = encodeURIComponent('Just generated a README for my project using DocRelief AI!');
+    window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${url}&title=${title}&summary=${summary}`, '_blank');
   };
 
   return (

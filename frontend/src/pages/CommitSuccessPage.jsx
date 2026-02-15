@@ -64,11 +64,12 @@ export default function CommitSuccessPage() {
     navigate(-1);
   };
 
-  const handleShareLinkedIn = () => {
-    const text = encodeURIComponent('Just generated a README for my project using DocRelief AI!');
-    const url = encodeURIComponent(commitResult.commit_url || commitResult.repo_url || '');
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&summary=${text}`, '_blank');
-  };
+const handleShareLinkedIn = () => {
+  const url = encodeURIComponent(commitResult.commit_url || commitResult.repo_url || window.location.origin);
+  const title = encodeURIComponent('My New README');
+  const summary = encodeURIComponent('Just generated a README for my project using DocRelief AI!');
+  window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${url}&title=${title}&summary=${summary}`, '_blank');
+};
 
   const handleClose = () => {
     navigate('/');

@@ -2,7 +2,8 @@
 FROM node:20-alpine AS builder
 
 WORKDIR /app
-
+ARG VITE_BACKEND_URL
+ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
 
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
@@ -29,6 +30,16 @@ RUN echo 'server { \
     server_name _; \
     root /usr/share/nginx/html; \
     index index.html; \
+    \
+    location /api/ { \
+        proxy_pass http://docrelief-backend:8000/api/; \
+        proxy_http_version 1.1; \
+        proxy_set_header Host $host; \
+        proxy_set_header X-Real-IP $remote_addr; \
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
+        proxy_set_header X-Forwarded-Proto $scheme; \
+    } \
+    \
     location / { \
         try_files $uri $uri/ /index.html; \
     } \

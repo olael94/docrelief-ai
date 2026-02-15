@@ -25,13 +25,15 @@ const LoadingPage = () => {
             try {
                 console.log('Starting to poll for README:', readmeId);
 
-                // Call pollReadmeStatus - it will poll every 2 seconds automatically
                 const result = await pollReadmeStatus(readmeId);
 
                 console.log('README generation completed!', result);
 
-                // When complete, navigate to preview page
-                navigate(`/preview/${readmeId}`);
+                if (readmeId) {
+                    navigate(`/preview/${readmeId}`);
+                } else {
+                    navigate('/preview');
+                }
 
             } catch (err) {
                 console.error('Polling error:', err);
