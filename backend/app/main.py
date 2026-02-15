@@ -47,7 +47,7 @@ app.include_router(github.router)
 async def read_root():
     return {"message": "Welcome to DocRelief AI"}
 
-@app.get("/health")
+@app.get("/api/health")
 async def health_check(db: AsyncSession = Depends(get_db)):
     # Test database connection
     try:

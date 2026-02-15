@@ -1,6 +1,10 @@
 import axios from 'axios';
 
 
+/* Base URL is intentionally empty in production and Docker.
+ * API calls use relative paths (/api/...) which are proxied by nginx (prod/Docker)
+ * or Vite's dev server proxy (local development).
+*/
 // 1. Define the base URL from environment variable
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -15,7 +19,7 @@ const api = axios.create({
 // Health check
 export const healthCheck = async () => {
     // Use the 'api' instance instead of 'axios'
-    const response = await api.get('/health');
+    const response = await api.get('/api/health');
     return response.data;
 };
 

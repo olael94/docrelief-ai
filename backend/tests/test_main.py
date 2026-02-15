@@ -45,7 +45,7 @@ class TestHealthCheckEndpoint:
 
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            response = await ac.get("/health")
+            response = await ac.get("/api/health")
 
         assert response.status_code == 200
         data = response.json()
@@ -67,7 +67,7 @@ class TestHealthCheckEndpoint:
 
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            response = await ac.get("/health")
+            response = await ac.get("/api/health")
 
         assert response.status_code == 200
         data = response.json()

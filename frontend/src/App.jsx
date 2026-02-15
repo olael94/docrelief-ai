@@ -1,4 +1,4 @@
-import {Routes, Route, Link} from 'react-router-dom';
+import {Routes, Route, Navigate} from 'react-router-dom';
 import {Toaster} from 'react-hot-toast';
 import LandingPage from './pages/LandingPage';
 import PreviewPage from './pages/PreviewPage';
@@ -46,6 +46,7 @@ function App() {
                         <Route path="/loading" element={<LoadingPage/>}/>
                         <Route path="/team" element={<TeamPage/>}/>
                         <Route path="/commit" element={<CommitPage />} />
+                        <Route path="*" element={<Navigate to="/" replace />}/>
                     </Routes>
                 </div>
                 <Footer/>
