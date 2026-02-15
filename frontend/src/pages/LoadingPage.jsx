@@ -29,11 +29,8 @@ const LoadingPage = () => {
 
                 console.log('README generation completed!', result);
 
-                if (readmeId) {
-                    navigate(`/preview/${readmeId}`);
-                } else {
-                    navigate('/preview');
-                }
+                // When complete, navigate to the preview page
+                navigate(`/preview/${readmeId}`);
 
             } catch (err) {
                 console.error('Polling error:', err);

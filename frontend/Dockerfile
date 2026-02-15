@@ -31,6 +31,10 @@ RUN echo 'server { \
     root /usr/share/nginx/html; \
     index index.html; \
     \
+    # VITE_BACKEND_URL is intentionally empty in production. \
+    # Instead of hardcoding the backend URL in the frontend build, \
+    # nginx proxies all /api/ requests to the backend container (docrelief-backend:8000). \
+    # For local development without Docker, Vite's proxy in vite.config.js handles this. \
     location /api/ { \
         proxy_pass http://docrelief-backend:8000/api/; \
         proxy_http_version 1.1; \
