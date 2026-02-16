@@ -1,7 +1,15 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle, Github, ArrowLeft, FileText, LayoutGrid, Share2, X } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  CheckCircle,
+  Github,
+  ArrowLeft,
+  FileText,
+  LayoutGrid,
+  Share2,
+  X,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function CommitSuccessPage() {
   const navigate = useNavigate();
@@ -11,34 +19,34 @@ export default function CommitSuccessPage() {
   useEffect(() => {
     // Get commit result from navigation state
     const result = location.state?.result;
-    
+
     if (!result) {
       // Try to get from sessionStorage
-      const saved = sessionStorage.getItem('commitResult');
+      const saved = sessionStorage.getItem("commitResult");
       if (saved) {
         try {
           setCommitResult(JSON.parse(saved));
         } catch (e) {
-          navigate('/');
+          navigate("/");
         }
       } else {
-        navigate('/');
+        navigate("/");
         return;
       }
     } else {
       setCommitResult(result);
       // Save to sessionStorage for refresh persistence
-      sessionStorage.setItem('commitResult', JSON.stringify(result));
+      sessionStorage.setItem("commitResult", JSON.stringify(result));
     }
 
     // ESC key handler
     const handleEsc = (e) => {
-      if (e.key === 'Escape') {
-        navigate('/');
+      if (e.key === "Escape") {
+        navigate("/");
       }
     };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
   }, [location, navigate]);
 
   if (!commitResult) {
@@ -47,32 +55,41 @@ export default function CommitSuccessPage() {
 
   const handleViewOnGitHub = () => {
     if (commitResult.commit_url) {
-      window.open(commitResult.commit_url, '_blank');
+      window.open(commitResult.commit_url, "_blank");
     }
   };
 
   const handleGenerateAnother = () => {
-    navigate('/');
+    navigate("/");
   };
 
   const handleViewDashboard = () => {
     // For now, navigate to home (dashboard not implemented yet)
-    navigate('/');
+    navigate("/");
   };
 
   const handleBackToPreview = () => {
     navigate(-1);
   };
 
-const handleShareLinkedIn = () => {
-  const url = encodeURIComponent(commitResult.commit_url || commitResult.repo_url || window.location.origin);
-  const title = encodeURIComponent('My New README');
-  const summary = encodeURIComponent('Just generated a README for my project using DocRelief AI!');
-  window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${url}&title=${title}&summary=${summary}`, '_blank');
-};
+  const handleShareLinkedIn = () => {
+    const url = encodeURIComponent(
+      commitResult.commit_url ||
+        commitResult.repo_url ||
+        window.location.origin,
+    );
+    const title = encodeURIComponent("My New README");
+    const summary = encodeURIComponent(
+      "Just generated a README for my project using DocRelief AI!",
+    );
+    window.open(
+      `https://www.linkedin.com/shareArticle?mini=true&url=${url}&title=${title}&summary=${summary}`,
+      "_blank",
+    );
+  };
 
   const handleClose = () => {
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -113,8 +130,10 @@ const handleShareLinkedIn = () => {
         </div>
 
         {/* Next actions */}
-        <p className="text-center text-gray-600 mb-6">Choose Your Next Action</p>
-        
+        <p className="text-center text-gray-600 mb-6">
+          Choose Your Next Action
+        </p>
+
         <div className="grid grid-cols-2 gap-4 mb-6">
           {/* Generate Another */}
           <button
@@ -123,9 +142,13 @@ const handleShareLinkedIn = () => {
           >
             <div className="flex items-center gap-2 mb-2">
               <FileText className="w-5 h-5 text-gray-600" />
-              <span className="font-semibold text-gray-900">Generate Another README.md</span>
+              <span className="font-semibold text-gray-900">
+                Generate Another README.md
+              </span>
             </div>
-            <p className="text-sm text-gray-500">Create documentation for another project</p>
+            <p className="text-sm text-gray-500">
+              Create documentation for another project
+            </p>
           </button>
 
           {/* View Dashboard */}
@@ -135,15 +158,21 @@ const handleShareLinkedIn = () => {
           >
             <div className="flex items-center gap-2 mb-2">
               <LayoutGrid className="w-5 h-5 text-gray-600" />
-              <span className="font-semibold text-gray-900">View Dashboard</span>
+              <span className="font-semibold text-gray-900">
+                View Dashboard
+              </span>
             </div>
-            <p className="text-sm text-gray-500">See all your generated READMEs</p>
+            <p className="text-sm text-gray-500">
+              See all your generated READMEs
+            </p>
           </button>
         </div>
 
         {/* Share banner */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-          <p className="text-blue-700 font-medium mb-4">Love DocRelief AI? Spread the word!</p>
+          <p className="text-blue-700 font-medium mb-4">
+            Love DocRelief AI? Spread the word!
+          </p>
           <div className="flex gap-3">
             <button
               onClick={handleBackToPreview}

@@ -1,63 +1,83 @@
 @import "tailwindcss";
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;900&display=swap");
 
 body {
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 .page-gradient {
-    background: linear-gradient(
-        to bottom,
-        #5FDA8A 0%,      /* Light green tint at top */
-        #F3F4F6 40%,     /* Gray middle */
-        #FFFFFF 100%     /* White bottom */
+  background:
+    radial-gradient(
+      ellipse 55% 50% at 65% 45%,
+      rgba(34, 197, 94, 0.18) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 60% 55% at 30% 50%,
+      rgba(59, 130, 246, 0.25) 0%,
+      transparent 65%
+    ),
+    linear-gradient(
+      to bottom,
+      #0d1525 0%,
+      #090f1c 40%,
+      #050810 70%,
+      #000000 100%
     );
 }
 
 .font-poppins {
-    font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 .font-fire-code {
-    font-family: 'Fira Code', monospace;
+  font-family: "Fira Code", monospace;
+}
+
+.font-urbanist {
+  font-family: "Urbanist", sans-serif;
 }
 
 .bg-navbar {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(28, 43, 58, 0.7); /* Matches your top gradient color */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .btn-landing {
-    background-color: #5FDA8A;
+  background-color: #22c55e;
 }
 
-/* Additional styles for syntax highlighting */
+.btn-landing:hover {
+  background-color: #16a34a;
+}
+
 .hljs {
-  background: #f6f8fa !important;
-  color: #24292e;
+  background: #161b22 !important;
+  color: #c9d1d9;
 }
 
 .hljs-comment,
 .hljs-quote {
-  color: #6a737d !important;
+  color: #8b949e !important;
   font-style: italic;
 }
 
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-subst {
-  color: #d73a49 !important;
+  color: #ff7b72 !important;
   font-weight: 600;
 }
 
 .hljs-selector-class,
 .hljs-selector-attr {
-  color: #d73a49 !important;
+  color: #ff7b72 !important;
 }
 
 .hljs-number,
@@ -65,79 +85,78 @@ body {
 .hljs-variable,
 .hljs-template-variable,
 .hljs-tag .hljs-attr {
-  color: #005cc5 !important;
+  color: #79c0ff !important;
 }
 
 .hljs-string,
 .hljs-doctag {
-  color: #032f62 !important;
+  color: #a5d6ff !important;
 }
 
 .hljs-title,
 .hljs-section,
 .hljs-selector-id {
-  color: #6f42c1 !important;
+  color: #d2a8ff !important;
   font-weight: bold;
 }
 
 .hljs-type,
 .hljs-class .hljs-title {
-  color: #6f42c1 !important;
+  color: #d2a8ff !important;
 }
 
 .hljs-tag,
 .hljs-name,
 .hljs-attribute {
-  color: #22863a !important;
+  color: #4ade80 !important;
   font-weight: normal;
 }
 
 .hljs-regexp,
 .hljs-link {
-  color: #032f62 !important;
+  color: #a5d6ff !important;
 }
 
 .hljs-symbol,
 .hljs-bullet {
-  color: #005cc5 !important;
+  color: #79c0ff !important;
 }
 
 .hljs-built_in,
 .hljs-builtin-name {
-  color: #e36209 !important;
+  color: #ffa657 !important;
 }
 
 .hljs-meta {
-  color: #6a737d !important;
+  color: #8b949e !important;
 }
 
-/* Additional language-specific highlighting */
 .hljs-function {
-  color: #6f42c1 !important;
+  color: #d2a8ff !important;
 }
 
 .hljs-params {
-  color: #24292e !important;
+  color: #c9d1d9 !important;
 }
 
 .hljs-property {
-  color: #005cc5 !important;
+  color: #79c0ff !important;
 }
 
 .hljs-punctuation {
-  color: #586069 !important;
+  color: #8b949e !important;
 }
 
 .hljs-operator {
-  color: #d73a49 !important;
+  color: #ff7b72 !important;
 }
 
 .hljs-deletion {
-  background: #ffeef0;
+  background: #3d1f1f;
 }
 
 .hljs-addition {
-  background: #f0fff4;
+  background: #1a3a1a;
 }
 
 .hljs-emphasis {
@@ -148,35 +167,49 @@ body {
   font-weight: bold;
 }
 
-/* Code block specific styles */
 pre {
-  background-color: #f6f8fa;
-  border-radius: 6px;
-  padding: 16px;
+  border-radius: 10px;
   overflow: auto;
-  font-size: 85%;
+  font-size: 90%;
   line-height: 1.45;
-  border: 1px solid #e1e4e8;
 }
 
 code {
-  background-color: rgba(175, 184, 193, 0.2);
+  background-color: #1c2b3a;
   padding: 0.2em 0.4em;
   margin: 0;
-  font-size: 85%;
+  font-size: 90%;
   border-radius: 3px;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
 pre code {
   background-color: transparent;
   padding: 0;
-  border: none;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(34, 197, 94, 0.3);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 197, 94, 0.5);
 }
 
 /* Monaco editor adjustments */
 .monaco-editor {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
 /* Monaco Editor rounded scrollbar */
@@ -185,9 +218,9 @@ pre code {
 }
 
 .monaco-editor .monaco-scrollable-element > .scrollbar > .slider {
+  background: rgba(34, 197, 94, 0.3) !important;
   border-radius: 5px !important;
 }
-
 
 /* Enhanced hljs styling */
 .hljs {
