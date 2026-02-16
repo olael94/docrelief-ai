@@ -8,8 +8,8 @@ const EditorPanel = ({ content, onChange, disabled = false, onEditorMount, onScr
 
     return (
         <div className="h-full flex flex-col">
-            <div className="bg-gray-100 px-6 py-4">
-                <h2 className="text-xl font-bold text-gray-900">Editor</h2>
+            <div className="bg-[#0D1117]/80 border-b border-green-500/40 px-6 py-4">
+                <h2 className="text-xl font-bold text-gray-100">Editor</h2>
             </div>
             <div className="flex-1 overflow-hidden">
                 <Editor
@@ -42,11 +42,11 @@ const EditorPanel = ({ content, onChange, disabled = false, onEditorMount, onScr
                         scrollbar: {
                             vertical: 'auto',
                             horizontal: 'auto',
-                            useShadows: false,
-                            verticalScrollbarSize: 10,
-                            horizontalScrollbarSize: 10,
-                            verticalSliderSize: 10,
-                            horizontalSliderSize: 10,
+                            useShadows: true,
+                            verticalScrollbarSize: 6,
+                            horizontalScrollbarSize: 6,
+                            verticalSliderSize: 6,
+                            horizontalSliderSize: 6,
                         },
                     }}
                     loading={

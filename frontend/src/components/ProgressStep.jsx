@@ -9,7 +9,7 @@ const ProgressStep = ({stepNumber, text, status}) => {
         if (status === 'completed') {
             return <CheckCircle className="w-6 h-6 text-green-500"/>;
         } else if (status === 'active') {
-            return <Loader2 className="w-6 h-6 text-green-500 animate-spin"/>;
+            return <Loader2 className="w-6 h-6 text-green-300 animate-spin"/>;
         } else {
             // pending - show gray circle
             return (
@@ -20,9 +20,9 @@ const ProgressStep = ({stepNumber, text, status}) => {
 
     // Determine text color based on status
     const getTextColor = () => {
-        if (status === 'completed') return 'text-green-600';
+        if (status === 'completed') return 'text-green-500';
         if (status === 'active') return 'text-green-300';
-        return 'text-gray-400';
+        return 'text-white';
     };
 
     return (

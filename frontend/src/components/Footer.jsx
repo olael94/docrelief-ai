@@ -13,7 +13,7 @@ const Footer = () => {
     return (
         <footer
             data-testid="footer"
-            className="w-full flex flex-col md:flex-row md:justify-between bg-gray-50 px-10 py-6 border-t border-zinc-700 md:px-36 min-w-[420px]"
+            className="w-full flex flex-col md:flex-row md:justify-between bg-[#1C2B3A]/60 backdrop-blur-md border-t border-green-500/40 px-10 py-6 md:px-36 min-w-[420px]"
         >
             <ul className="flex flex-row gap-6 justify-center md:justify-start order-1">
                 {links.map((link, index) => (

@@ -234,21 +234,21 @@ export default function PrivateRepoTab() {
         return (
             <div className="w-[340px] md:w-[660px] space-y-6">
                 {/* Connected Banner */}
-                <div className="bg-green-50 border border-green-200 rounded-4xl p-4">
+                <div className="bg-green-500/10 border border-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.15)] rounded-4xl p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                             <div className="text-green-600">
                                 <CheckCircle2 className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="font-semibold text-green-900">GitHub Connected</p>
-                                <p className="text-sm text-green-700">@{githubUser.github_username}</p>
+                                <p className="font-semibold text-green-500">GitHub Connected</p>
+                                <p className="text-sm text-green-600">@{githubUser.github_username}</p>
                             </div>
                         </div>
                         <button
                             onClick={handleDisconnect}
                             disabled={isDisconnecting}
-                            className="text-sm text-gray-600 hover:text-gray-900 underline disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="text-sm text-white hover:text-red-400  disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
                         </button>
@@ -256,23 +256,22 @@ export default function PrivateRepoTab() {
                 </div>
 
                 {/* Repository Selection Container */}
-                <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden">
+                <div className="bg-[#1C2B3A]/60 backdrop-blur-md border border-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.15)] rounded-3xl overflow-hidden">
                     {/* Header with search */}
-                    <div className="bg-gray-50 border-b border-gray-200 p-4">
-                        <h3 className="text-lg font-poppins font-bold text-gray-900 mb-3">
+                    <div className="bg-[#0D1117]/80 border-b border-green-500/40 p-4">
+                        <h3 className="text-lg font-poppins font-bold text-white mb-3">
                             Repositories ({filteredRepos.length})
                         </h3>
 
                         {/* Search bar */}
                         <div className="relative">
-                            {/* Search icon inside input */}
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-400 w-5 h-5" />
                             <input
                                 type="text"
                                 placeholder="Search repositories..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 bg-white rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full pl-10 pr-4 py-2 bg-[#1C2B3A]/60 border border-green-500/40 text-gray-200 placeholder-gray-500 rounded-3xl focus:outline-none focus:border-green-400 focus:shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all"
                             />
                         </div>
                     </div>
@@ -280,20 +279,17 @@ export default function PrivateRepoTab() {
                     {/* Repository List */}
                     <div className="p-4 space-y-3 max-h-[400px] overflow-y-auto">
                         {loading ? (
-                            // Loading state
                             <div className="flex items-center justify-center py-12">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                                <p className="ml-3 text-gray-600">Loading repositories...</p>
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400"></div>
+                                <p className="ml-3 text-gray-400">Loading repositories...</p>
                             </div>
                         ) : filteredRepos.length === 0 ? (
-                            // Empty state
                             <div className="text-center py-12">
-                                <p className="text-gray-600">
+                                <p className="text-gray-400">
                                     {searchQuery ? 'No repositories match your search.' : 'No repositories found.'}
                                 </p>
                             </div>
                         ) : (
-                            // Repository cards using RepoCard component
                             filteredRepos.map(repo => (
                                 <RepoCard
                                     key={repo.id}
@@ -308,13 +304,13 @@ export default function PrivateRepoTab() {
 
                 {/* Generate README Button - Shows when repo is selected */}
                 {selectedRepo && (
-                    <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden">
+                    <div className="bg-[#1C2B3A]/60 backdrop-blur-md border border-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.15)] rounded-3xl overflow-hidden">
                         {/* Header */}
-                        <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
-                            <h3 className="text-lg font-poppins font-bold text-gray-900">
+                        <div className="bg-[#0D1117]/80 border-b border-green-500/40 px-4 py-3">
+                            <h3 className="text-lg font-poppins font-bold text-gray-100">
                                 Generate README
                             </h3>
-                            <p className="text-sm text-green-500 mt-1">
+                            <p className="text-sm text-green-400 mt-1">
                                 Repository: <span className="font-medium">{selectedRepo.name}</span>
                             </p>
                         </div>
@@ -324,34 +320,34 @@ export default function PrivateRepoTab() {
                             {/* Default Branch Info */}
                             {loadingBranch ? (
                                 <div className="flex items-center justify-center py-4">
-                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
-                                    <p className="ml-3 text-sm text-gray-600">Loading branch info...</p>
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-400"></div>
+                                    <p className="ml-3 text-sm text-gray-400">Loading branch info...</p>
                                 </div>
                             ) : defaultBranch && (
-                                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                                <div className="bg-blue-500/10 border border-blue-500/40 rounded-2xl p-4">
                                     <div className="flex items-center space-x-2">
-                                        <GitBranch className="w-5 h-5 text-blue-600" />
-                                        <span className="text-sm font-medium text-blue-900">
-                                            Generating from branch: <span className="font-bold">{defaultBranch.name}</span>
-                                        </span>
+                                        <GitBranch className="w-5 h-5 text-blue-400" />
+                                        <span className="text-sm font-medium text-blue-300">
+                            Generating from branch: <span className="font-bold">{defaultBranch.name}</span>
+                        </span>
                                     </div>
                                 </div>
                             )}
 
-                            {/* README Warning - Shows when branch already has README.md */}
+                            {/* README Warning */}
                             {defaultBranch?.has_readme && (
-                                <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
+                                <div className="bg-yellow-500/10 border border-yellow-500/40 rounded-2xl p-4">
                                     <div className="flex items-start space-x-3">
                                         <div className="flex-shrink-0">
-                                            <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                             </svg>
                                         </div>
                                         <div className="flex-1">
-                                            <h4 className="text-sm font-medium text-yellow-800">
+                                            <h4 className="text-sm font-medium text-yellow-300">
                                                 README.md already exists
                                             </h4>
-                                            <p className="text-sm text-yellow-700 mt-1">
+                                            <p className="text-sm text-yellow-400/80 mt-1">
                                                 This branch already contains a README.md file. Generating a new README will overwrite the existing one.
                                             </p>
                                         </div>
@@ -366,14 +362,13 @@ export default function PrivateRepoTab() {
                                     disabled={loadingBranch}
                                     className={`w-full max-w-[950px] py-3 px-4 rounded-4xl font-medium transition-all ${
                                         loadingBranch
-                                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                            : 'bg-[#5FDA8A] hover:bg-green-700 text-white shadow-sm hover:shadow-md'
+                                            ? 'bg-white/10 text-gray-500 cursor-not-allowed'
+                                            : 'bg-green-500 hover:bg-green-400 text-black shadow-sm hover:shadow-[0_0_20px_rgba(34,197,94,0.3)]'
                                     }`}
                                 >
                                     {loadingBranch ? 'Loading...' : `Generate README for ${selectedRepo.name}`}
                                 </button>
 
-                                {/* Helper text */}
                                 <p className="text-xs text-gray-500 text-center mt-2">
                                     This will analyze your repository and generate a professional README
                                 </p>
@@ -388,11 +383,11 @@ export default function PrivateRepoTab() {
     // Unauthenticated UI
     return (
         <div className="w-[340px] md:w-[660px] flex flex-col items-center h-full min-h-[500px]">
-            <div className="bg-white rounded-lg">
+            <div className="rounded-lg">
                 <div className="max-w-md mx-auto text-center items-center space-y-6">
                     {/* GitHub Icon */}
                     <div className="flex justify-center mb-4">
-                        <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-20 h-20 text-white" fill="currentColor" viewBox="0 0 24 24">
                             <path fillRule="evenodd"
                                   d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
                                   clipRule="evenodd"/>
@@ -400,12 +395,12 @@ export default function PrivateRepoTab() {
                     </div>
 
                     {/* Title */}
-                    <h2 className="text-3xl font-bold text-gray-900">
+                    <h2 className="text-3xl font-bold text-green-500">
                         Access Private Repositories
                     </h2>
 
                     {/* Subtitle */}
-                    <p className="text-gray-500">
+                    <p className="text-green-200">
                         Connect your GitHub account to generate READMEs for your private repositories
                     </p>
 
@@ -413,15 +408,15 @@ export default function PrivateRepoTab() {
                     <div className="space-y-3 text-left">
                         <div className="flex items-start space-x-3">
                             <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
-                            <p className="text-gray-700">Private repos require authentication to access code</p>
+                            <p className="text-white">Private repos require authentication to access code</p>
                         </div>
                         <div className="flex items-start space-x-3">
                             <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
-                            <p className="text-gray-700">We need permission to read your repo structure and files</p>
+                            <p className="text-white">We need permission to read your repo structure and files</p>
                         </div>
                         <div className="flex items-start space-x-3">
                             <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
-                            <p className="text-gray-700">You can revoke access anytime from GitHub settings</p>
+                            <p className="text-white">You can revoke access anytime from GitHub settings</p>
                         </div>
                     </div>
 
@@ -429,7 +424,7 @@ export default function PrivateRepoTab() {
                     <button
                         onClick={handleConnectGitHub}
                         disabled={isConnecting}
-                        className="max-w-[310px] min h-[70px] mx-auto bg-black text-white px-6 py-3 rounded-3xl hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center space-x-2"
+                        className="max-w-[310px] min h-[70px] mx-auto bg-black text-white px-6 py-3 rounded-3xl hover:bg-green-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center space-x-2"
                     >
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                             <path fillRule="evenodd"

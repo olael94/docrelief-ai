@@ -273,13 +273,13 @@ const PreviewPage = () => {
         <div className="min-h-screen md:h-screen flex flex-col ">
             {/* Repository Info - Read Only */}
             <div className="flex items-center justify-center gap-3 mt-8 mb-6 px-6">
-                <Github className="w-5 h-5 text-gray-700"/>
-                <div className="flex-1 max-w-xl px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
+                <Github className="w-5 h-5 text-green-400"/>
+                <div className="flex-1 max-w-xl px-4 py-2 border border-green-500/40 rounded-lg bg-[#1C2B3A]/60 backdrop-blur-md text-gray-300">
                     {repoUrl || 'Loading repository...'}
                 </div>
                 <button
                     onClick={handleChangeRepository}
-                    className="px-6 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors"
+                    className="px-6 py-2 bg-white/10 hover:bg-white/20 text-gray-200 font-medium rounded-lg transition-colors border border-white/10"
                 >
                     Change Repository
                 </button>
@@ -290,7 +290,7 @@ const PreviewPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:h-full">
                     {/* Editor Panel - independently scrollable */}
                     <div
-                        className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[700px] max-h-[80vh] md:h-full">
+                        className="bg-[#1C2B3A]/60 backdrop-blur-md border border-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.15)] rounded-3xl overflow-hidden flex flex-col min-h-[700px] max-h-[80vh] md:h-full">
                         <EditorPanel
                             content={content}
                             onChange={setContent}
@@ -302,7 +302,7 @@ const PreviewPage = () => {
 
                     {/* Preview Panel - independently scrollable */}
                     <div
-                        className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[700px] max-h-[80vh] md:h-full">
+                        className="bg-[#1C2B3A]/60 backdrop-blur-md border border-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.15)] rounded-3xl overflow-hidden flex flex-col min-h-[700px] max-h-[80vh] md:h-full">
                         <PreviewPanel
                             content={content}
                             isLoading={isLoading || isRegenerating}
@@ -314,11 +314,11 @@ const PreviewPage = () => {
 
             {/* Action Bar */}
             <div className="flex items-center justify-center pb-30">
-                <div className="bg-white rounded-2xl shadow-lg px-8 py-6 flex items-center gap-6">
+                <div className="bg-[#1C2B3A]/60 backdrop-blur-md border border-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.15)] rounded-2xl px-8 py-6 flex items-center gap-6">
                     <div className="flex flex-col md:flex-row items-center gap-6">
                         {/* Success Message */}
                         {showSuccess && (
-                            <div className="flex items-center gap-2 text-green-500">
+                            <div className="flex items-center gap-2 text-green-400">
                                 <CheckCircle className="w-5 h-5"/>
                                 <div className="text-sm font-medium leading-tight">
                                     README<br/>generated<br/>successfully
@@ -326,12 +326,11 @@ const PreviewPage = () => {
                             </div>
                         )}
 
-                        {/* Action Buttons */}
                         {/* Regenerate Button*/}
                         <button
                             onClick={handleRegenerate}
                             disabled={isRegenerating}
-                            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-gray-200 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <RefreshCw className={`w-5 h-5 ${isRegenerating ? 'animate-spin' : ''}`}/>
                             Regenerate
@@ -340,7 +339,7 @@ const PreviewPage = () => {
                         {/* Download Button*/}
                         <button
                             onClick={handleDownload}
-                            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors"
+                            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-gray-200 rounded-lg font-medium transition-colors"
                         >
                             <Download className="w-5 h-5"/>
                             Download
@@ -349,7 +348,7 @@ const PreviewPage = () => {
                         {/* Commit Button*/}
                         <button
                             onClick={handleCommit}
-                            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-black text-white hover:bg-gray-800 rounded-lg font-medium transition-colors"
+                            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-400 text-black rounded-lg font-medium transition-colors"
                         >
                             <Github className="w-5 h-5"/>
                             Commit

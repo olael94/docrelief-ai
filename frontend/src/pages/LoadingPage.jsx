@@ -71,11 +71,11 @@ const LoadingPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen ">
 
             <div className="flex items-center justify-center min-h-[80vh]">
-                <div className="bg-white rounded-3xl shadow-lg p-6 md:p-12 w-full max-w-[400px] md:max-w-md">
-                    <h1 className="font-poppins text-3xl font-bold text-gray-900 mb-8 text-center">
+                <div className="bg-[#1C2B3A]/60 backdrop-blur-md border border-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.15)] rounded-3xl p-6 md:p-12 w-full max-w-[400px] md:max-w-md">
+                    <h1 className="font-urbanist text-3xl font-black text-green-500 mb-8 text-center">
                         Generating Your README
                     </h1>
 

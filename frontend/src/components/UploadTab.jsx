@@ -133,8 +133,8 @@ export default function UploadTab() {
             <div className="w-[340px] md:w-[660px] flex flex-col items-center h-full min-h-[500px]">
                 {/* This connects all the drag-and-drop event handlers to the UI */}
                 <div
-                    className={`bg-gray-100 rounded-3xl w-full h-[200px] cursor-pointer transition-colors ${
-                        isDragging ? 'border-4 border-blue-500 bg-blue-50' : 'border-2 border-dashed border-gray-300'
+                    className={`bg-[#1C2B3A]/60 backdrop-blur-md rounded-3xl w-full h-[200px] cursor-pointer transition-colors ${
+                        isDragging ? 'border-2 border-green-400 shadow-[0_0_20px_rgba(34,197,94,0.25)]' : 'border-2 border-dashed border-green-500/40'
                     }`}
                     onClick={handleBoxClick}
                     onDragOver={handleDragOver}
@@ -142,14 +142,14 @@ export default function UploadTab() {
                     onDrop={handleDrop}
                 >
                     <div className="p-9 flex flex-col items-center w-full justify-center">
-                        <FolderOpen className="text-gray-400 w-10 h-10"/>
-                        <p className="pb-2 text-gray-400">Drag & drop your zip file here or click to browse</p>
+                        <FolderOpen className="text-green-400 w-10 h-10"/>
+                        <p className="pb-2 text-gray-300">Drag & drop your zip file here or click to browse</p>
                         <p className="text-gray-400">Supported: .zip files only</p>
                         <p className="text-gray-400">Max: 10MB</p>
                     </div>
                 </div>
 
-                <h1 className="self-start pt-4 pb-4 font-fire-code text-bold">
+                <h1 className="self-start pt-4 pb-4 font-fire-code text-bold text-green-200">
                     Uploaded files ({files.length})
                 </h1>
 
@@ -179,7 +179,7 @@ export default function UploadTab() {
                         </button>
                     </div>
                 ) : (
-                    <p className="self-start pt-4 pb-4 font-fire-code text-gray-500">No files uploaded yet.</p>
+                    <p className="self-start pt-4 pb-4 font-fire-code text-white">No files uploaded yet.</p>
                 )}
 
                 <div className="mt-auto mb-9">

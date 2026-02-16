@@ -79,7 +79,7 @@ export default function GitHubCallback() {
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">Connection Failed</h2>
                         <p className="text-gray-600 mb-6">An error occurred during authentication.</p>
                         <button
-                            onClick={() => window.location.href = '/?tab=private'}
+                            onClick={() => window.location.href = '/?tab=private-repo'}
                             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                         >
                             Return to App

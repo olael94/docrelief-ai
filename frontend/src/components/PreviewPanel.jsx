@@ -10,7 +10,7 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
 
             if (!inline && language) {
                 return (
-                    <div className="relative my-4">
+                    <div className="relative my-4 bg-[#161b22] rounded-lg">
                         <div className="absolute top-2 right-2 px-2 py-1 text-xs bg-gray-700 text-white rounded z-10">
                             {language}
                         </div>
@@ -37,7 +37,7 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
 
             return (
                 <code className="px-1.5 py-0.5 rounded text-sm font-mono"
-                      style={{ backgroundColor: '#f3f4f6', color: '#dc2626' }} {...props}>
+                      style={{ backgroundColor: '#1C2B3A', color: '#4ade80' }} {...props}>
                     {children}
                 </code>
             );
@@ -45,66 +45,66 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
 
         table: ({ children }) => (
             <div className="overflow-x-auto my-4">
-                <table className="min-w-full border-collapse border border-gray-300">
+                <table className="min-w-full border-collapse border border-green-500/20">
                     {children}
                 </table>
             </div>
         ),
 
         thead: ({ children }) => (
-            <thead className="bg-gray-50">{children}</thead>
+            <thead className="bg-[#1C2B3A]">{children}</thead>
         ),
 
         th: ({ children }) => (
-            <th className="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-900">
+            <th className="border border-green-500/20 px-4 py-2 text-left font-semibold text-gray-100">
                 {children}
             </th>
         ),
 
         td: ({ children }) => (
-            <td className="border border-gray-300 px-4 py-2 text-gray-700">
+            <td className="border border-green-500/20 px-4 py-2 text-gray-300">
                 {children}
             </td>
         ),
 
         h1: ({ children }) => (
-            <h1 className="text-3xl font-bold text-gray-900 mt-6 mb-4 pb-2 border-b border-gray-200">
+            <h1 className="text-3xl font-bold text-gray-100 mt-6 mb-4 pb-2 border-b border-green-500/20">
                 {children}
             </h1>
         ),
 
         h2: ({ children }) => (
-            <h2 className="text-2xl font-semibold text-gray-900 mt-6 mb-3">
+            <h2 className="text-2xl font-semibold text-gray-100 mt-6 mb-3">
                 {children}
             </h2>
         ),
 
         h3: ({ children }) => (
-            <h3 className="text-xl font-semibold text-gray-900 mt-4 mb-2">
+            <h3 className="text-xl font-semibold text-gray-100 mt-4 mb-2">
                 {children}
             </h3>
         ),
 
         p: ({ children }) => (
-            <p className="text-gray-700 my-3 leading-relaxed">
+            <p className="text-gray-300 my-3 leading-relaxed">
                 {children}
             </p>
         ),
 
         ul: ({ children }) => (
-            <ul className="list-disc list-inside my-3 space-y-1 text-gray-700">
+            <ul className="list-disc list-inside my-3 space-y-1 text-gray-300">
                 {children}
             </ul>
         ),
 
         ol: ({ children }) => (
-            <ol className="list-decimal list-inside my-3 space-y-1 text-gray-700">
+            <ol className="list-decimal list-inside my-3 space-y-1 text-gray-300">
                 {children}
             </ol>
         ),
 
         blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-gray-300 pl-4 my-4 italic text-gray-600">
+            <blockquote className="border-l-4 border-green-500/40 pl-4 my-4 italic text-gray-400">
                 {children}
             </blockquote>
         ),
@@ -112,7 +112,7 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
         a: ({ href, children }) => (
             <a
                 href={href}
-                className="text-blue-600 hover:text-blue-800 underline"
+                className="text-green-400 hover:text-green-300 underline"
                 target="_blank"
                 rel="noopener noreferrer"
             >
@@ -124,8 +124,8 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
     if (isLoading) {
         return (
             <div className="h-full flex flex-col">
-                <div className="bg-gray-100 px-6 py-4">
-                    <h2 className="text-xl font-bold text-gray-900">Preview</h2>
+                <div className="bg-[#0D1117]/80 border-b border-green-500/40 px-6 py-4">
+                    <h2 className="text-xl font-bold text-gray-100">Preview</h2>
                 </div>
                 <div className="flex-1 flex items-center justify-center bg-white">
                     <div className="text-center">
@@ -140,10 +140,10 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
 
     return (
         <div className="h-full flex flex-col">
-            <div className="bg-gray-100 px-6 py-4">
-                <h2 className="text-xl font-bold text-gray-900">Preview</h2>
+            <div className="bg-[#0D1117]/80 border-b border-green-500/40 px-6 py-4">
+                <h2 className="text-xl font-bold text-gray-100">Preview</h2>
             </div>
-            <div ref={previewRef} className="flex-1 overflow-y-auto bg-white px-6 py-4 preview-panel-scroll">
+            <div ref={previewRef} className="flex-1 overflow-y-auto bg-[#0D1117] px-6 py-4 preview-panel-scroll">
                 <div className="max-w-none">
                     <ReactMarkdown
                         remarkPlugins={[remarkGfm]}

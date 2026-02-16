@@ -150,187 +150,181 @@ export default function CommitPage() {
       setIsCommitting(false);
     }
   };
-  
+
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-          <p className="text-gray-600 font-medium">Loading commit details...</p>
+        <div className="min-h-screen flex items-center justify-center page-gradient">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-10 h-10 animate-spin text-green-400" />
+            <p className="text-gray-400 font-medium">Loading commit details...</p>
+          </div>
         </div>
-      </div>
     );
   }
-  // Error state
+
+// Error state
   if (error || !readmeData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center max-w-md bg-white rounded-2xl shadow-lg p-8">
-          <div className="mb-6">
-            <GitPullRequest className="mx-auto h-16 w-16 text-red-500" />
+        <div className="min-h-screen page-gradient flex items-center justify-center p-4">
+          <div className="text-center max-w-md bg-[#1C2B3A]/60 backdrop-blur-md border border-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.15)] rounded-2xl p-8">
+            <div className="mb-6">
+              <GitPullRequest className="mx-auto h-16 w-16 text-red-400" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-100 mb-4">README Not Found</h1>
+            <p className="text-gray-400 mb-8">{error || "The README doesn't exist."}</p>
+            <button onClick={() => navigate('/')} className="px-6 py-3 bg-green-500 hover:bg-green-400 text-black font-medium rounded-lg transition-colors">
+              Go Back Home
+            </button>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">README Not Found</h1>
-          <p className="text-gray-600 mb-8">{error || "The README doesn't exist."}</p>
-          <button onClick={() => navigate('/')} className="px-6 py-3 bg-blue-600 text-white rounded-lg">
-            Go Back Home
-          </button>
         </div>
-      </div>
     );
   }
+
   return (
-    <>
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-8">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3">
-            {/* Git branch icon - see Figma for icon component */}
-            <span className="w-6 h-6 text-gray-700">
-              <GitBranch className="w-6 h-6" />
-            </span>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Commit Details
-            </h1>
-          </div>
-        </div>
+      <>
+        <div className="min-h-screen page-gradient py-8 px-4">
+          <div className="max-w-2xl mx-auto bg-[#1C2B3A]/60 backdrop-blur-md border border-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.15)] rounded-2xl p-8">
 
-        {/* Form Section */}
-        <div className="mb-6 space-y-6">
-          {/* Commit Message Field */}
-          <div className="space-y-2">
-            <label
-              htmlFor="commitMessage"
-              className="block text-lg font-semibold text-gray-900"
-            >
-              Commit Message
-            </label>
-            <p className="text-gray-500 text-sm">
-              Describe what this commit does
-            </p>
-            <input
-              type="text"
-              id="commitMessage"
-              value={commitMessage}
-              onChange={(e) => setCommitMessage(e.target.value)}
-              maxLength={200}
-              disabled={isCommitting}
-              placeholder="Add comprehensive README.md via DocRelief AI"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-            />
-            <p className={`text-sm mt-2 text-right ${commitMessage.length > 180 ? 'text-orange-500 font-medium' : 'text-gray-400'}`}>
-              {commitMessage.length}/200 characters
-            </p>
-          </div>
+            {/* Header Section */}
+            <div className="mb-8">
+              <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 text-green-400">
+                            <GitBranch className="w-6 h-6" />
+                        </span>
+                <h1 className="text-2xl font-bold text-gray-100">
+                  Commit Details
+                </h1>
+              </div>
+            </div>
 
-          {/* Extended Description Field */}
-          <div className="space-y-2">
-            <label
-              htmlFor="extendedDescription"
-              className="block text-lg font-semibold text-gray-900"
-            >
-              Extended Description (Optional)
-            </label>
-            <p className="text-gray-500 text-sm">
-              Add more context about this commit
-            </p>
-            <textarea
-              id="extendedDescription"
-              value={extendedDescription}
-              onChange={(e) => setExtendedDescription(e.target.value)}
-              rows={6}
-              disabled={isCommitting}
-              placeholder="Generated by DocRelief AI"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-            />
-          </div>
-        </div>
+            {/* Form Section */}
+            <div className="mb-6 space-y-6">
+              {/* Commit Message Field */}
+              <div className="space-y-2">
+                <label htmlFor="commitMessage" className="block text-lg font-semibold text-gray-200">
+                  Commit Message
+                </label>
+                <p className="text-gray-500 text-sm">
+                  Describe what this commit does
+                </p>
+                <input
+                    type="text"
+                    id="commitMessage"
+                    value={commitMessage}
+                    onChange={(e) => setCommitMessage(e.target.value)}
+                    maxLength={200}
+                    disabled={isCommitting}
+                    placeholder="Add comprehensive README.md via DocRelief AI"
+                    className="w-full px-4 py-3 bg-[#1C2B3A]/60 border border-green-500/40 text-gray-200 placeholder-gray-500 rounded-xl focus:outline-none focus:border-green-400 focus:shadow-[0_0_15px_rgba(34,197,94,0.15)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <p className={`text-sm mt-2 text-right ${commitMessage.length > 180 ? 'text-orange-400 font-medium' : 'text-gray-500'}`}>
+                  {commitMessage.length}/200 characters
+                </p>
+              </div>
 
-        {/* Target Branch Section */}
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">
-            Target Branch
-          </h2>
-          <p className="text-gray-500 text-sm mb-3">
-            README.md will be committed in branch:
-          </p>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg border border-gray-200">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
-            <GitBranch className="w-4 h-4 text-gray-600" />
-            <span className="text-gray-900 font-medium">
-              {readmeData?.branch || 'main'}
-            </span>
-          </div>
-        </div>
+              {/* Extended Description Field */}
+              <div className="space-y-2">
+                <label htmlFor="extendedDescription" className="block text-lg font-semibold text-gray-200">
+                  Extended Description (Optional)
+                </label>
+                <p className="text-gray-500 text-sm">
+                  Add more context about this commit
+                </p>
+                <textarea
+                    id="extendedDescription"
+                    value={extendedDescription}
+                    onChange={(e) => setExtendedDescription(e.target.value)}
+                    rows={6}
+                    disabled={isCommitting}
+                    placeholder="Generated by DocRelief AI"
+                    className="w-full px-4 py-3 bg-[#1C2B3A]/60 border border-green-500/40 text-gray-200 placeholder-gray-500 rounded-xl focus:outline-none focus:border-green-400 focus:shadow-[0_0_15px_rgba(34,197,94,0.15)] transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+            </div>
 
-        {/* Changes Section */}
-        <div className="mb-8 border border-gray-200 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Changes to be committed:
-          </h3>
+            {/* Target Branch Section */}
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-gray-200 mb-2">
+                Target Branch
+              </h2>
+              <p className="text-gray-500 text-sm mb-3">
+                README.md will be committed in branch:
+              </p>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#1C2B3A]/60 border border-green-500/40 rounded-lg">
+                <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                <GitBranch className="w-4 h-4 text-green-400" />
+                <span className="text-gray-200 font-medium">
+                            {readmeData?.branch || 'main'}
+                        </span>
+              </div>
+            </div>
 
-          {/* File tile */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 flex items-center gap-3">
-            <FileText className="w-5 h-5 text-green-600" />
-            <div className="flex flex-col">
-              <span className="font-semibold text-gray-900">
-                README.md
-              </span>
-              <span className="text-sm text-gray-500">
-                {repoOwner}/{repoName}
-              </span>
+            {/* Changes Section */}
+            <div className="mb-8 border border-green-500/40 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-gray-200 mb-4">
+                Changes to be committed:
+              </h3>
+
+              {/* File tile */}
+              <div className="bg-green-500/10 border border-green-500/40 rounded-lg p-4 mb-4 flex items-center gap-3">
+                <FileText className="w-5 h-5 text-green-400" />
+                <div className="flex flex-col">
+                            <span className="font-semibold text-gray-200">
+                                README.md
+                            </span>
+                  <span className="text-sm text-gray-500">
+                                {repoOwner}/{repoName}
+                            </span>
+                </div>
+              </div>
+
+              {/* Info message box */}
+              <div className="bg-blue-500/10 border border-blue-500/40 rounded-lg p-4 flex items-start gap-3">
+                <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-blue-300 leading-relaxed">
+                  This will create a new README.md file in the root of your repository. If a README already exists, it will be updated.
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between gap-4">
+              <button
+                  onClick={() => navigate(-1)}
+                  className="flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-gray-200 border border-white/10 rounded-lg font-medium transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Preview
+              </button>
+
+              <button
+                  onClick={handleCommit}
+                  disabled={!commitMessage.trim() || commitMessage.length > 200 || isCommitting}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-medium rounded-lg transition-colors"
+              >
+                {isCommitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Committing...
+                    </>
+                ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Commit to GitHub
+                    </>
+                )}
+              </button>
             </div>
           </div>
 
-          {/* Info message box */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-            <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-blue-700 leading-relaxed">
-              This will create a new README.md file in the root of your repository. If a README already exists, it will be updated.
-            </p>
-          </div>
+          {/* Success Modal */}
+          <CommitSuccessModal
+              isOpen={showSuccessModal}
+              onClose={() => setShowSuccessModal(false)}
+              commitData={commitResult}
+          />
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between gap-4">
-          {/* Back to Preview button */}
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Preview
-          </button>
-          
-          {/* Commit to GitHub button */}
-          <button
-            onClick={handleCommit}
-            disabled={!commitMessage.trim() || commitMessage.length > 200 || isCommitting}
-            className="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
-          >
-            {isCommitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Committing...
-              </>
-            ) : (
-              <>
-                <Check className="w-4 h-4" />
-                Commit to GitHub
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-      
-      {/* Success Modal */}
-      <CommitSuccessModal
-        isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-        commitData={commitResult}
-      />
-      </div>
-    </>
+      </>
   );
 }

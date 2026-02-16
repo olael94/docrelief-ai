@@ -73,9 +73,9 @@ export default function PublicRepoTab() {
 
     return (
         <div className="w-full flex flex-col items-center h-full min-h-[500px]">
-            <h1 className="font-fire-code self-start pt-4 pb-4">Repository URL</h1>
+            <h1 className="font-fire-code text-green-200 self-start pt-4 pb-4">Repository URL</h1>
             <input
-                className="bg-[#d9d9d9] rounded-3xl py-3 px-8 w-[340px] md:w-[660px] text-left"
+                className="bg-[#1C2B3A]/60 backdrop-blur-md border border-green-500/40 rounded-3xl py-3 px-8 w-[340px] md:w-[660px] text-left text-gray-200 placeholder-gray-500 focus:outline-none focus:border-green-400 focus:shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all"
                 type="text"
                 placeholder="https://github.com/username/repo"
                 value={repoUrl}
@@ -89,7 +89,7 @@ export default function PublicRepoTab() {
                     onClick={handleGenerate}
                 />
             </div>
-            <span className="mt-auto mb-4 text-bold">Use this tab for public Github Repositories</span>
+            <span className="mt-auto mb-4 text-bold text-gray-500 ">Use this tab for public Github Repositories</span>
         </div>
     );
 }
