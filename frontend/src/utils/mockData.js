@@ -138,10 +138,10 @@ Last updated: January 25, 2026
 `;
 
 export const mockApiData = {
-  id: 'demo-123',
-  title: 'Awesome Project',
+  id: "demo-123",
+  title: "Awesome Project",
   content: sampleReadmeContent,
-  repoUrl: 'https://github.com/example/awesome-project',
-  createdAt: '2026-01-25T00:00:00Z',
-  updatedAt: '2026-01-25T00:00:00Z'
+  repoUrl: "https://github.com/example/awesome-project",
+  createdAt: "2026-01-25T00:00:00Z",
+  updatedAt: "2026-01-25T00:00:00Z",
 };

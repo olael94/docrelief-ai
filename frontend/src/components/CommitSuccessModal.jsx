@@ -1,6 +1,13 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Github, FileText, LayoutGrid, ArrowLeft, Check, X } from 'lucide-react';
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Github,
+  FileText,
+  LayoutGrid,
+  ArrowLeft,
+  Check,
+  X,
+} from "lucide-react";
 
 export default function CommitSuccessModal({ isOpen, onClose, commitData }) {
   const navigate = useNavigate();
@@ -8,13 +15,13 @@ export default function CommitSuccessModal({ isOpen, onClose, commitData }) {
   // Handle ESC key press
   useEffect(() => {
     const handleEsc = (e) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         onClose();
-        navigate('/'); // ESC → Home
+        navigate("/"); // ESC → Home
       }
     };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose, navigate]);
 
   if (!isOpen) return null;
@@ -22,34 +29,41 @@ export default function CommitSuccessModal({ isOpen, onClose, commitData }) {
   // Navigation handlers
   const handleXClick = () => {
     onClose();
-    navigate('/dashboard');
+    navigate("/dashboard");
   };
 
   const handleBackdropClick = () => {
     onClose();
-    navigate('/dashboard');
+    navigate("/dashboard");
   };
 
   const handleGenerateAnother = () => {
     onClose();
-    navigate('/');
+    navigate("/");
   };
 
   const handleViewDashboard = () => {
     onClose();
-    navigate('/dashboard');
+    navigate("/dashboard");
   };
 
   const handleBackToPreview = () => {
     onClose();
-    navigate('/preview');
+    navigate("/preview");
   };
 
   const handleShareLinkedIn = () => {
-    const url = encodeURIComponent(commitData?.commit_url || commitData?.repo_url || window.location.origin);
-    const title = encodeURIComponent('My New README');
-    const summary = encodeURIComponent('Just generated a README for my project using DocRelief AI!');
-    window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${url}&title=${title}&summary=${summary}`, '_blank');
+    const url = encodeURIComponent(
+      commitData?.commit_url || commitData?.repo_url || window.location.origin,
+    );
+    const title = encodeURIComponent("My New README");
+    const summary = encodeURIComponent(
+      "Just generated a README for my project using DocRelief AI!",
+    );
+    window.open(
+      `https://www.linkedin.com/shareArticle?mini=true&url=${url}&title=${title}&summary=${summary}`,
+      "_blank",
+    );
   };
 
   return (
@@ -94,7 +108,7 @@ export default function CommitSuccessModal({ isOpen, onClose, commitData }) {
           {/* View on GitHub Button */}
           <div className="flex justify-center mb-8">
             <a
-              href={commitData?.commit_url || '#'}
+              href={commitData?.commit_url || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/10 text-gray-200 font-medium rounded-lg transition-colors"
@@ -168,7 +182,9 @@ export default function CommitSuccessModal({ isOpen, onClose, commitData }) {
                 onClick={handleShareLinkedIn}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg transition-colors text-sm font-medium text-gray-300"
               >
-                <span className="w-4 h-4 flex items-center justify-center">✓</span>
+                <span className="w-4 h-4 flex items-center justify-center">
+                  ✓
+                </span>
                 Share on LinkedIn
               </button>
             </div>
