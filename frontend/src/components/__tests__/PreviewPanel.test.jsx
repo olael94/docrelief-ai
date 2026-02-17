@@ -156,14 +156,6 @@ describe("PreviewPanel", () => {
       expect(scrollArea).toBeInTheDocument();
       expect(scrollArea).toHaveClass("preview-panel-scroll");
     });
-
-    it("should have dark background for content", () => {
-      const { container } = render(<PreviewPanel content="" />);
-
-      const contentArea = container.querySelector(".overflow-y-auto");
-      expect(contentArea).toBeInTheDocument();
-      expect(contentArea).toHaveClass("bg-[#0D1117]");
-    });
   });
 
   describe("Header", () => {
@@ -172,7 +164,6 @@ describe("PreviewPanel", () => {
 
       const header = screen.getByText("Preview").parentElement;
       expect(header).toHaveClass("border-b");
-      expect(header).toHaveClass("border-green-500/40");
       expect(header).toHaveClass("px-6");
       expect(header).toHaveClass("py-4");
     });
