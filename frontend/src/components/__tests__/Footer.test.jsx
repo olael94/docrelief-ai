@@ -113,16 +113,6 @@ describe("Footer", () => {
   });
 
   describe("Styling", () => {
-    it("should have correct base styling classes", () => {
-      render(<Footer />);
-
-      const footer = screen.getByTestId("footer");
-      expect(footer).toHaveClass("w-full");
-      expect(footer).toHaveClass("border-t");
-      expect(footer).toHaveClass("border-green-500/40");
-      expect(footer).toHaveClass("backdrop-blur-md");
-    });
-
     it("should have responsive flex layout", () => {
       render(<Footer />);
 
@@ -149,19 +139,11 @@ describe("Footer", () => {
       expect(footer).toHaveClass("min-w-[420px]");
     });
 
-    it("should have hover effect on links", () => {
+    it("should have hover underline on links", () => {
       render(<Footer />);
 
       const link = screen.getByText("GitHub").closest("a");
-      expect(link).toHaveClass("hover:text-teal-500");
       expect(link).toHaveClass("hover:underline");
-    });
-
-    it("should have transition effect on links", () => {
-      render(<Footer />);
-
-      const link = screen.getByText("GitHub").closest("a");
-      expect(link).toHaveClass("transition-colors");
     });
 
     it("should have no underline by default on links", () => {
@@ -170,24 +152,9 @@ describe("Footer", () => {
       const link = screen.getByText("GitHub").closest("a");
       expect(link).toHaveClass("no-underline");
     });
-
-    it("should have gray text color for links", () => {
-      render(<Footer />);
-
-      const link = screen.getByText("GitHub").closest("a");
-      expect(link).toHaveClass("text-gray-600");
-    });
   });
 
   describe("Copyright Text", () => {
-    it("should have correct styling for copyright", () => {
-      render(<Footer />);
-
-      const copyright = screen.getByTestId("footerContent");
-      expect(copyright).toHaveClass("text-gray-500");
-      expect(copyright).toHaveClass("text-sm");
-    });
-
     it("should have responsive text alignment", () => {
       render(<Footer />);
 

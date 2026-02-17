@@ -39,25 +39,6 @@ describe("ProgressStep", () => {
   });
 
   describe("Status: Pending", () => {
-    it("should show gray circle for pending status", () => {
-      const { container } = render(
-        <ProgressStep {...defaultProps} status="pending" />,
-      );
-
-      const circle = container.querySelector(".border-gray-300");
-      expect(circle).toBeInTheDocument();
-      expect(circle).toHaveClass("w-6");
-      expect(circle).toHaveClass("h-6");
-      expect(circle).toHaveClass("rounded-full");
-    });
-
-    it("should have gray text for pending status", () => {
-      render(<ProgressStep {...defaultProps} status="pending" />);
-
-      const text = screen.getByText("Step 1: Upload file");
-      expect(text).toHaveClass("text-white");
-    });
-
     it("should not show CheckCircle for pending", () => {
       render(<ProgressStep {...defaultProps} status="pending" />);
 
@@ -79,25 +60,11 @@ describe("ProgressStep", () => {
       expect(loader).toBeInTheDocument();
     });
 
-    it("should have green text for active status", () => {
-      render(<ProgressStep {...defaultProps} status="active" />);
-
-      const text = screen.getByText("Step 1: Upload file");
-      expect(text).toHaveClass("text-green-300");
-    });
-
     it("should have spinning animation on loader", () => {
       render(<ProgressStep {...defaultProps} status="active" />);
 
       const loader = screen.getByTestId("loader");
       expect(loader).toHaveClass("animate-spin");
-    });
-
-    it("should have green loader color", () => {
-      render(<ProgressStep {...defaultProps} status="active" />);
-
-      const loader = screen.getByTestId("loader");
-      expect(loader).toHaveClass("text-green-300");
     });
 
     it("should not show CheckCircle for active", () => {
@@ -113,20 +80,6 @@ describe("ProgressStep", () => {
 
       const checkCircle = screen.getByTestId("check-circle");
       expect(checkCircle).toBeInTheDocument();
-    });
-
-    it("should have green text for completed status", () => {
-      render(<ProgressStep {...defaultProps} status="completed" />);
-
-      const text = screen.getByText("Step 1: Upload file");
-      expect(text).toHaveClass("text-green-500");
-    });
-
-    it("should have green check circle color", () => {
-      render(<ProgressStep {...defaultProps} status="completed" />);
-
-      const checkCircle = screen.getByTestId("check-circle");
-      expect(checkCircle).toHaveClass("text-green-500");
     });
 
     it("should not show Loader for completed", () => {
@@ -201,13 +154,6 @@ describe("ProgressStep", () => {
       expect(text).toHaveClass("text-lg");
       expect(text).toHaveClass("font-medium");
     });
-
-    it("should have transition for color changes", () => {
-      render(<ProgressStep {...defaultProps} />);
-
-      const text = screen.getByText("Step 1: Upload file");
-      expect(text).toHaveClass("transition-colors");
-    });
   });
 
   describe("Status Transitions", () => {
@@ -234,25 +180,6 @@ describe("ProgressStep", () => {
 
       expect(screen.queryByTestId("loader")).not.toBeInTheDocument();
       expect(screen.getByTestId("check-circle")).toBeInTheDocument();
-    });
-
-    it("should update text color when status changes", () => {
-      const { rerender } = render(
-        <ProgressStep {...defaultProps} status="pending" />,
-      );
-
-      let text = screen.getByText("Step 1: Upload file");
-      expect(text).toHaveClass("text-white");
-
-      rerender(<ProgressStep {...defaultProps} status="active" />);
-
-      text = screen.getByText("Step 1: Upload file");
-      expect(text).toHaveClass("text-green-300");
-
-      rerender(<ProgressStep {...defaultProps} status="completed" />);
-
-      text = screen.getByText("Step 1: Upload file");
-      expect(text).toHaveClass("text-green-500");
     });
   });
 

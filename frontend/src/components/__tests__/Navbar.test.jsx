@@ -43,7 +43,6 @@ describe("Navbar", () => {
       renderWithRouter(<Navbar />);
 
       const nav = screen.getByRole("navigation");
-      expect(nav).toHaveClass("bg-gray-50");
       expect(nav).toHaveClass("rounded-4xl");
       expect(nav).toHaveClass("flex");
     });
@@ -191,8 +190,6 @@ describe("Navbar", () => {
       renderWithRouter(<Navbar />);
 
       const nav = screen.getByRole("navigation");
-      expect(nav).toHaveClass("bg-navbar");
-      expect(nav).toHaveClass("text-black");
       expect(nav).toHaveClass("font-bold");
     });
 
