@@ -366,7 +366,7 @@ const PreviewPage = () => {
 
       {/* Split Screen Editor - with independent scrolling */}
       <div className="flex-1 px-6 pb-6 overflow-hidden md:h-full">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:h-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-screen-2xl mx-auto md:h-full">
           {/* Editor Panel - independently scrollable */}
           <div className="bg-[#1C2B3A]/60 backdrop-blur-md border border-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.15)] rounded-3xl overflow-hidden flex flex-col min-h-[700px] max-h-[80vh] md:h-full">
             <EditorPanel
