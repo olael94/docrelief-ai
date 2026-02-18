@@ -32,6 +32,10 @@ const PreviewPage = () => {
   const editorRef = React.useRef(null);
   const previewRef = React.useRef(null);
   const isScrollingRef = React.useRef(false);
+  // This to disable regenerate button when on file upload.
+  const [inputMethod, setInputMethod] = useState("");
+  // This is to use when a user used file upload
+  const [repoName, setRepoName] = useState("");
 
   React.useEffect(() => {
     const loadReadme = async () => {
@@ -50,6 +54,8 @@ const PreviewPage = () => {
         if (readmeData.status === "completed") {
           setContent(readmeData.readme_content || "");
           setRepoUrl(readmeData.repo_url || "");
+          setRepoName(readmeData.repo_name || "");
+          setInputMethod(readmeData.input_method || "");
           setShowSuccess(true);
         } else if (
           readmeData.status === "pending" ||
@@ -58,6 +64,8 @@ const PreviewPage = () => {
           const completedData = await pollReadmeStatus(readmeId);
           setContent(completedData.readme_content || "");
           setRepoUrl(completedData.repo_url || "");
+          setRepoName(readmeData.repo_name || "");
+          setInputMethod(completedData.input_method || "");
           setShowSuccess(true);
         }
       } catch (err) {
@@ -210,6 +218,12 @@ const PreviewPage = () => {
   }
 
   const handleRegenerate = async () => {
+    console.log("Current inputMethod:", inputMethod);
+    if (inputMethod === "file_upload") {
+      toast.error("Regenerate is not available for file uploads");
+      return;
+    }
+
     if (!repoUrl) {
       setError("Repository URL not available");
       return;
@@ -297,6 +311,23 @@ const PreviewPage = () => {
   };
 
   const handleCommit = () => {
+    if (inputMethod === "file_upload" || inputMethod === "public_url") {
+      toast.error(
+        <div>
+          Cannot commit. Connect your GitHub account in the Private Repo tab to
+          enable commits.{" "}
+          <span
+            onClick={() => navigate("/?tab=private-repo")}
+            className="underline cursor-pointer font-bold hover:text-green-500 transition-colors"
+          >
+            Click here
+          </span>
+        </div>,
+        { duration: 6000 },
+      );
+      return;
+    }
+
     if (!readmeId || readmeId === "preview") {
       toast.error("Please generate a README first");
       return;
@@ -321,13 +352,15 @@ const PreviewPage = () => {
       <div className="flex items-center justify-center gap-3 mt-8 mb-6 px-6">
         <Github className="w-5 h-5 text-green-400" />
         <div className="flex-1 max-w-xl px-4 py-2 border border-green-500/40 rounded-lg bg-[#1C2B3A]/60 backdrop-blur-md text-gray-300">
-          {repoUrl || "Loading repository..."}
+          {inputMethod === "file_upload"
+            ? `${repoName}.zip`
+            : repoUrl || "Loading repository..."}
         </div>
         <button
           onClick={handleChangeRepository}
           className="px-6 py-2 bg-white/10 hover:bg-white/20 text-gray-200 font-medium rounded-lg transition-colors border border-white/10"
         >
-          Change Repository
+          Change Source
         </button>
       </div>
 
@@ -357,7 +390,7 @@ const PreviewPage = () => {
       </div>
 
       {/* Action Bar */}
-      <div className="flex items-center justify-center pb-30">
+      <div className="flex items-center justify-center pb-8">
         <div className="bg-[#1C2B3A]/60 backdrop-blur-md border border-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.15)] rounded-2xl px-8 py-6 flex items-center gap-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Success Message */}

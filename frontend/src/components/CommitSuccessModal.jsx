@@ -9,7 +9,12 @@ import {
   X,
 } from "lucide-react";
 
-export default function CommitSuccessModal({ isOpen, onClose, commitData }) {
+export default function CommitSuccessModal({
+  isOpen,
+  onClose,
+  commitData,
+  readmeId,
+}) {
   const navigate = useNavigate();
 
   // Handle ESC key press
@@ -49,7 +54,11 @@ export default function CommitSuccessModal({ isOpen, onClose, commitData }) {
 
   const handleBackToPreview = () => {
     onClose();
-    navigate("/preview");
+    if (readmeId) {
+      navigate(`/preview?id=${readmeId}`);
+    } else {
+      navigate("/preview");
+    }
   };
 
   const handleShareLinkedIn = () => {
