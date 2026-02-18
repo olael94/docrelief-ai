@@ -170,7 +170,7 @@ describe("PreviewPage", () => {
       });
     });
 
-    it("should render Change Repository button", async () => {
+    it("should render Change Source button", async () => {
       const { getReadme } = await import("../../services/api");
       getReadme.mockResolvedValue({
         status: "completed",
@@ -182,7 +182,7 @@ describe("PreviewPage", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByRole("button", { name: /Change Repository/i }),
+          screen.getByRole("button", { name: /Change Source/i }),
         ).toBeInTheDocument();
       });
     });
@@ -358,18 +358,18 @@ describe("PreviewPage", () => {
       expect(textarea).toHaveValue("# New Content");
     });
 
-    it("should navigate home when Change Repository is clicked", async () => {
+    it("should navigate home when Change Source is clicked", async () => {
       const user = userEvent.setup();
       renderComponent();
 
       await waitFor(() => {
         expect(
-          screen.getByRole("button", { name: /Change Repository/i }),
+          screen.getByRole("button", { name: /Change Source/i }),
         ).toBeInTheDocument();
       });
 
       await user.click(
-        screen.getByRole("button", { name: /Change Repository/i }),
+        screen.getByRole("button", { name: /Change Source/i }),
       );
 
       expect(window.location.href).toBe("/");
