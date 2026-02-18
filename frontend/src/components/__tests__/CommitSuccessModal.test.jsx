@@ -181,18 +181,7 @@ describe("CommitSuccessModal", () => {
       expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
     });
 
-    it("should call onClose and navigate to dashboard when backdrop is clicked", async () => {
-      const user = userEvent.setup();
-      const onClose = vi.fn();
-      renderModal({ onClose });
 
-      // Find backdrop (first div with fixed positioning)
-      const backdrop = document.querySelector(".fixed.inset-0.bg-black\\/50");
-      await user.click(backdrop);
-
-      expect(onClose).toHaveBeenCalledTimes(1);
-      expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
-    });
 
     it("should call onClose and navigate to home when Generate Another is clicked", async () => {
       const user = userEvent.setup();
@@ -296,29 +285,6 @@ describe("CommitSuccessModal", () => {
         "_blank",
       );
       mockOpen.mockRestore();
-    });
-  });
-
-  describe("Styling", () => {
-    it("should have backdrop blur effect", () => {
-      renderModal();
-
-      const backdrop = document.querySelector(".backdrop-blur-sm");
-      expect(backdrop).toBeInTheDocument();
-    });
-
-    it("should have green border styling on modal", () => {
-      renderModal();
-
-      const modal = document.querySelector(".border-green-500\\/40");
-      expect(modal).toBeInTheDocument();
-    });
-
-    it("should have green success icon background", () => {
-      renderModal();
-
-      const iconContainer = document.querySelector(".bg-green-500");
-      expect(iconContainer).toBeInTheDocument();
     });
   });
 

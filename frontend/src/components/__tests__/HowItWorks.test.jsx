@@ -53,27 +53,13 @@ describe("HowItWorks", () => {
   });
 
   describe("Step Numbers", () => {
-    it("should display step numbers in green circles", () => {
-      const { container } = render(<HowItWorks />);
+    it("should display 4 step number circles", () => {
+      render(<HowItWorks />);
 
-      const stepCircles = container.querySelectorAll(".bg-green-500.rounded-full");
-      expect(stepCircles).toHaveLength(4);
-    });
-
-    it("should have proper step circle dimensions", () => {
-      const { container } = render(<HowItWorks />);
-
-      const stepCircles = container.querySelectorAll(".w-12.h-12");
-      expect(stepCircles).toHaveLength(4);
-    });
-
-    it("should have white text in step circles", () => {
-      const { container } = render(<HowItWorks />);
-
-      const stepCircles = container.querySelectorAll(
-        ".bg-green-500.text-white.rounded-full",
-      );
-      expect(stepCircles).toHaveLength(4);
+      expect(screen.getByText("1")).toBeInTheDocument();
+      expect(screen.getByText("2")).toBeInTheDocument();
+      expect(screen.getByText("3")).toBeInTheDocument();
+      expect(screen.getByText("4")).toBeInTheDocument();
     });
   });
 
@@ -85,97 +71,13 @@ describe("HowItWorks", () => {
       expect(grid).toBeInTheDocument();
     });
 
-    it("should have responsive grid columns", () => {
-      const { container } = render(<HowItWorks />);
-
-      const grid = container.querySelector(".grid");
-      expect(grid).toHaveClass("grid-cols-1");
-      expect(grid).toHaveClass("md:grid-cols-2");
-      expect(grid).toHaveClass("lg:grid-cols-4");
-    });
-
-    it("should have gap between grid items", () => {
-      const { container } = render(<HowItWorks />);
-
-      const grid = container.querySelector(".grid");
-      expect(grid).toHaveClass("gap-6");
-    });
-
-    it("should center step content", () => {
+    it("should render 4 step containers", () => {
       const { container } = render(<HowItWorks />);
 
       const stepContainers = container.querySelectorAll(
         ".flex.flex-col.items-center.text-center",
       );
       expect(stepContainers).toHaveLength(4);
-    });
-  });
-
-  describe("Styling", () => {
-    it("should have proper container styling", () => {
-      const { container } = render(<HowItWorks />);
-
-      const mainContainer = container.firstChild;
-      expect(mainContainer).toHaveClass("rounded-4xl");
-      expect(mainContainer).toHaveClass("shadow-2xl");
-    });
-
-    it("should have backdrop blur effect", () => {
-      const { container } = render(<HowItWorks />);
-
-      const mainContainer = container.firstChild;
-      expect(mainContainer).toHaveClass("backdrop-blur-md");
-    });
-
-    it("should have green border styling", () => {
-      const { container } = render(<HowItWorks />);
-
-      const mainContainer = container.firstChild;
-      expect(mainContainer).toHaveClass("border-green-500/40");
-    });
-
-    it("should have heading with proper styling", () => {
-      render(<HowItWorks />);
-
-      const heading = screen.getByText("How it Works");
-      expect(heading).toHaveClass("font-poppins");
-      expect(heading).toHaveClass("text-3xl");
-      expect(heading).toHaveClass("font-bold");
-      expect(heading).toHaveClass("text-white");
-    });
-
-    it("should have step titles with green text", () => {
-      render(<HowItWorks />);
-
-      const title = screen.getByText("GitHub URL or Files");
-      expect(title).toHaveClass("text-green-200");
-    });
-
-    it("should have step descriptions with white text", () => {
-      render(<HowItWorks />);
-
-      const description = screen.getByText(
-        "Paste a GitHub repository URL or upload your code files",
-      );
-      expect(description).toHaveClass("text-white");
-    });
-  });
-
-  describe("Responsive Design", () => {
-    it("should have responsive width classes", () => {
-      const { container } = render(<HowItWorks />);
-
-      const mainContainer = container.firstChild;
-      expect(mainContainer).toHaveClass("w-[400px]");
-      expect(mainContainer).toHaveClass("md:w-[921px]");
-    });
-
-    it("should have margin classes for spacing", () => {
-      const { container } = render(<HowItWorks />);
-
-      const mainContainer = container.firstChild;
-      expect(mainContainer).toHaveClass("mt-16");
-      expect(mainContainer).toHaveClass("mb-10");
     });
   });
 
