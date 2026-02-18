@@ -106,25 +106,62 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
           (child.tagName === "pre" || child.tagName === "code"),
       );
 
-      // If it has block children, just return the children without wrapping in <p>
+      // If it has block children, use a div instead of <p> to avoid invalid nesting,
+      // but keep the same text styling so the surrounding text doesn't go black.
       if (hasBlockChild) {
-        return <>{children}</>;
+        return <div className="text-gray-300 my-3 leading-relaxed">{children}</div>;
       }
 
       return <p className="text-gray-300 my-3 leading-relaxed">{children}</p>;
     },
 
     ul: ({ children }) => (
-      <ul className="list-disc list-inside my-3 space-y-1 text-gray-300">
+      <ul className="list-disc list-outside ml-6 my-3 space-y-1 text-gray-300">
         {children}
       </ul>
     ),
 
     ol: ({ children }) => (
-      <ol className="list-decimal list-inside my-3 space-y-1 text-gray-300">
+      <ol className="list-decimal list-outside ml-6 my-3 space-y-1 text-gray-300">
         {children}
       </ol>
     ),
+
+    li: ({ children }) => {
+      const childArray = React.Children.toArray(children);
+
+      // Helper: extract children from inside our custom p wrapper (function component)
+      // Use plain array concat instead of React.Children.toArray to avoid key collisions
+      const unwrap = (child) =>
+        child && typeof child.type === "function"
+          ? [].concat(child.props?.children || [])
+          : [child];
+
+      // Flatten one level: look inside p wrappers so we can find <strong>
+      const flattened = childArray.flatMap(unwrap);
+
+      const strongIdx = flattened.findIndex((c) => c?.type === "strong");
+
+      if (strongIdx !== -1) {
+        const before = flattened.slice(0, strongIdx + 1);
+        const after = flattened
+          .slice(strongIdx + 1)
+          .filter((c) => !(typeof c === "string" && c.trim() === ""));
+
+        if (after.length > 0) {
+          return (
+            <li className="text-gray-300 pl-1">
+              {before.map((c, i) => React.isValidElement(c) ? React.cloneElement(c, { key: `before-${i}` }) : c)}
+              <div className="mt-1">
+                {after.map((c, i) => React.isValidElement(c) ? React.cloneElement(c, { key: `after-${i}` }) : c)}
+              </div>
+            </li>
+          );
+        }
+      }
+
+      return <li className="text-gray-300 pl-1">{children}</li>;
+    },
 
     blockquote: ({ children }) => (
       <blockquote className="border-l-4 border-green-500/40 pl-4 my-4 italic text-gray-400">
