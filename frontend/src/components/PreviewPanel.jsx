@@ -98,9 +98,21 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
       </h3>
     ),
 
-    p: ({ children }) => (
-      <p className="text-gray-300 my-3 leading-relaxed">{children}</p>
-    ),
+    p: ({ children, node }) => {
+      // Check if children contains block-level elements like pre/code blocks
+      const hasBlockChild = node?.children?.some(
+        (child) =>
+          child.type === "element" &&
+          (child.tagName === "pre" || child.tagName === "code"),
+      );
+
+      // If it has block children, just return the children without wrapping in <p>
+      if (hasBlockChild) {
+        return <>{children}</>;
+      }
+
+      return <p className="text-gray-300 my-3 leading-relaxed">{children}</p>;
+    },
 
     ul: ({ children }) => (
       <ul className="list-disc list-inside my-3 space-y-1 text-gray-300">

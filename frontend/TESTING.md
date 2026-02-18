@@ -17,6 +17,7 @@ This document provides comprehensive guidance on testing the DocRelief AI fronte
 ## Overview
 
 Our testing setup follows industry standards using:
+
 - **Vitest** - Fast, Vite-native test runner
 - **React Testing Library** - Component testing focused on user behavior
 - **jsdom** - DOM environment simulation
@@ -55,10 +56,13 @@ pnpm test:coverage
 ```
 
 ### Watch Mode
+
 In watch mode, tests automatically re-run when files change. Press `h` in the terminal to see available commands.
 
 ### UI Mode
+
 The UI mode provides a visual interface for:
+
 - Viewing test results
 - Debugging failing tests
 - Inspecting component renders
@@ -90,31 +94,31 @@ frontend/src/components/
 ### Test Suite Structure
 
 ```javascript
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import MyComponent from '../MyComponent';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import MyComponent from "../MyComponent";
 
-describe('MyComponent', () => {
+describe("MyComponent", () => {
   // Setup that runs before each test
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('Rendering', () => {
-    it('should render basic elements', () => {
+  describe("Rendering", () => {
+    it("should render basic elements", () => {
       // Test implementation
     });
   });
 
-  describe('User Interactions', () => {
-    it('should handle click events', async () => {
+  describe("User Interactions", () => {
+    it("should handle click events", async () => {
       // Test implementation
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle empty props', () => {
+  describe("Edge Cases", () => {
+    it("should handle empty props", () => {
       // Test implementation
     });
   });
@@ -126,29 +130,29 @@ describe('MyComponent', () => {
 ### Basic Component Test
 
 ```javascript
-import { render, screen } from '@testing-library/react';
-import { expect, it } from 'vitest';
-import MyButton from '../MyButton';
+import { render, screen } from "@testing-library/react";
+import { expect, it } from "vitest";
+import MyButton from "../MyButton";
 
-it('should render button text', () => {
+it("should render button text", () => {
   render(<MyButton text="Click me" />);
 
-  expect(screen.getByRole('button', { name: 'Click me' })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Click me" })).toBeInTheDocument();
 });
 ```
 
 ### Testing User Interactions
 
 ```javascript
-import userEvent from '@testing-library/user-event';
+import userEvent from "@testing-library/user-event";
 
-it('should call onClick when clicked', async () => {
+it("should call onClick when clicked", async () => {
   const user = userEvent.setup();
   const onClick = vi.fn();
 
   render(<MyButton onClick={onClick} />);
 
-  await user.click(screen.getByRole('button'));
+  await user.click(screen.getByRole("button"));
 
   expect(onClick).toHaveBeenCalledTimes(1);
 });
@@ -157,14 +161,14 @@ it('should call onClick when clicked', async () => {
 ### Testing Async Behavior
 
 ```javascript
-import { waitFor } from '@testing-library/react';
+import { waitFor } from "@testing-library/react";
 
-it('should load data', async () => {
+it("should load data", async () => {
   render(<DataComponent />);
 
   // Wait for async operation
   await waitFor(() => {
-    expect(screen.getByText('Data loaded')).toBeInTheDocument();
+    expect(screen.getByText("Data loaded")).toBeInTheDocument();
   });
 });
 ```
@@ -172,33 +176,33 @@ it('should load data', async () => {
 ### Testing Forms
 
 ```javascript
-it('should submit form data', async () => {
+it("should submit form data", async () => {
   const user = userEvent.setup();
   const onSubmit = vi.fn();
 
   render(<MyForm onSubmit={onSubmit} />);
 
-  await user.type(screen.getByLabelText('Name'), 'John Doe');
-  await user.click(screen.getByRole('button', { name: 'Submit' }));
+  await user.type(screen.getByLabelText("Name"), "John Doe");
+  await user.click(screen.getByRole("button", { name: "Submit" }));
 
-  expect(onSubmit).toHaveBeenCalledWith({ name: 'John Doe' });
+  expect(onSubmit).toHaveBeenCalledWith({ name: "John Doe" });
 });
 ```
 
 ### Testing with React Router
 
 ```javascript
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from "react-router-dom";
 
 const renderWithRouter = (component) => {
   return render(<BrowserRouter>{component}</BrowserRouter>);
 };
 
-it('should navigate on click', () => {
+it("should navigate on click", () => {
   renderWithRouter(<NavLink to="/about">About</NavLink>);
 
-  const link = screen.getByRole('link', { name: 'About' });
-  expect(link).toHaveAttribute('href', '/about');
+  const link = screen.getByRole("link", { name: "About" });
+  expect(link).toHaveAttribute("href", "/about");
 });
 ```
 
@@ -207,30 +211,33 @@ it('should navigate on click', () => {
 ### 1. Test User Behavior, Not Implementation
 
 ✅ **Good:**
+
 ```javascript
-it('should display error when email is invalid', async () => {
+it("should display error when email is invalid", async () => {
   const user = userEvent.setup();
   render(<LoginForm />);
 
-  await user.type(screen.getByLabelText('Email'), 'invalid-email');
-  await user.click(screen.getByRole('button', { name: 'Submit' }));
+  await user.type(screen.getByLabelText("Email"), "invalid-email");
+  await user.click(screen.getByRole("button", { name: "Submit" }));
 
-  expect(screen.getByText('Please enter a valid email')).toBeInTheDocument();
+  expect(screen.getByText("Please enter a valid email")).toBeInTheDocument();
 });
 ```
 
 ❌ **Bad:**
+
 ```javascript
-it('should set emailError state to true', () => {
+it("should set emailError state to true", () => {
   const wrapper = shallow(<LoginForm />);
-  wrapper.instance().validateEmail('invalid-email');
-  expect(wrapper.state('emailError')).toBe(true);
+  wrapper.instance().validateEmail("invalid-email");
+  expect(wrapper.state("emailError")).toBe(true);
 });
 ```
 
 ### 2. Use Accessible Queries
 
 **Query Priority:**
+
 1. `getByRole` - Accessibility-focused (preferred)
 2. `getByLabelText` - For form fields
 3. `getByPlaceholderText` - When label isn't available
@@ -238,27 +245,29 @@ it('should set emailError state to true', () => {
 5. `getByTestId` - Last resort
 
 ✅ **Good:**
+
 ```javascript
-screen.getByRole('button', { name: 'Submit' });
-screen.getByLabelText('Email');
+screen.getByRole("button", { name: "Submit" });
+screen.getByLabelText("Email");
 ```
 
 ❌ **Avoid:**
+
 ```javascript
-screen.getByClassName('submit-btn');
-wrapper.find('.email-input');
+screen.getByClassName("submit-btn");
+wrapper.find(".email-input");
 ```
 
 ### 3. Don't Test Third-Party Libraries
 
 ```javascript
 // ❌ Don't test Monaco Editor internals
-it('should have syntax highlighting', () => {
+it("should have syntax highlighting", () => {
   // Monaco Editor is already tested by Microsoft
 });
 
 // ✅ Test your integration with the library
-it('should call onChange when content changes', () => {
+it("should call onChange when content changes", () => {
   const onChange = vi.fn();
   render(<EditorPanel onChange={onChange} />);
   // Test your callback
@@ -270,13 +279,19 @@ it('should call onChange when content changes', () => {
 ```javascript
 // ❌ Bad: Tests depend on execution order
 let user;
-beforeAll(() => { user = { name: 'John' }; });
-it('test 1', () => { user.age = 30; });
-it('test 2', () => { expect(user.age).toBe(30); }); // Fragile!
+beforeAll(() => {
+  user = { name: "John" };
+});
+it("test 1", () => {
+  user.age = 30;
+});
+it("test 2", () => {
+  expect(user.age).toBe(30);
+}); // Fragile!
 
 // ✅ Good: Each test is self-contained
-it('test 1', () => {
-  const user = { name: 'John', age: 30 };
+it("test 1", () => {
+  const user = { name: "John", age: 30 };
   expect(user.age).toBe(30);
 });
 ```
@@ -285,27 +300,35 @@ it('test 1', () => {
 
 ```javascript
 // ❌ Bad
-it('works', () => { /* ... */ });
-it('test button', () => { /* ... */ });
+it("works", () => {
+  /* ... */
+});
+it("test button", () => {
+  /* ... */
+});
 
 // ✅ Good
-it('should display error message when form is invalid', () => { /* ... */ });
-it('should disable submit button while loading', () => { /* ... */ });
+it("should display error message when form is invalid", () => {
+  /* ... */
+});
+it("should disable submit button while loading", () => {
+  /* ... */
+});
 ```
 
 ### 6. Group Related Tests
 
 ```javascript
-describe('LoginForm', () => {
-  describe('Validation', () => {
-    it('should require email');
-    it('should require password');
-    it('should validate email format');
+describe("LoginForm", () => {
+  describe("Validation", () => {
+    it("should require email");
+    it("should require password");
+    it("should validate email format");
   });
 
-  describe('Submission', () => {
-    it('should call onSubmit with credentials');
-    it('should show loading state');
+  describe("Submission", () => {
+    it("should call onSubmit with credentials");
+    it("should show loading state");
   });
 });
 ```
@@ -316,7 +339,7 @@ describe('LoginForm', () => {
 
 ```javascript
 // Mock an entire module
-vi.mock('@monaco-editor/react', () => ({
+vi.mock("@monaco-editor/react", () => ({
   default: ({ value, onChange }) => (
     <textarea value={value} onChange={(e) => onChange(e.target.value)} />
   ),
@@ -327,8 +350,8 @@ vi.mock('@monaco-editor/react', () => ({
 
 ```javascript
 const mockFn = vi.fn();
-mockFn.mockReturnValue('mocked value');
-mockFn.mockResolvedValue('async value');
+mockFn.mockReturnValue("mocked value");
+mockFn.mockResolvedValue("async value");
 mockFn.mockImplementation((x) => x * 2);
 ```
 
@@ -337,7 +360,7 @@ mockFn.mockImplementation((x) => x * 2);
 ```javascript
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.setSystemTime(new Date('2024-01-01'));
+  vi.setSystemTime(new Date("2024-01-01"));
 });
 
 afterEach(() => {
@@ -348,8 +371,8 @@ afterEach(() => {
 ### Mocking Images/Assets
 
 ```javascript
-vi.mock('../../assets/logo.png', () => ({
-  default: '/mocked-logo.png',
+vi.mock("../../assets/logo.png", () => ({
+  default: "/mocked-logo.png",
 }));
 ```
 
@@ -362,22 +385,24 @@ pnpm test:coverage
 ```
 
 This generates:
+
 - **Terminal output** - Quick summary
 - **HTML report** - Detailed visual report in `coverage/index.html`
 - **JSON report** - For CI/CD integration
 
 ### Coverage Goals
 
-| Metric | Goal | Current |
-|--------|------|---------|
-| Statements | 80%+ | 📊 |
-| Branches | 75%+ | 📊 |
-| Functions | 80%+ | 📊 |
-| Lines | 80%+ | 📊 |
+| Metric     | Goal | Current |
+| ---------- | ---- | ------- |
+| Statements | 80%+ | 📊      |
+| Branches   | 75%+ | 📊      |
+| Functions  | 80%+ | 📊      |
+| Lines      | 80%+ | 📊      |
 
 ### What to Test
 
 ✅ **Always test:**
+
 - User interactions (clicks, typing, navigation)
 - Form validation
 - Error states
@@ -386,12 +411,14 @@ This generates:
 - Props handling
 
 ⚠️ **Consider testing:**
+
 - Complex calculations
 - State management logic
 - Custom hooks
 - Utility functions
 
 ❌ **Don't test:**
+
 - Third-party library internals
 - Browser APIs
 - Trivial code (getters/setters)
@@ -415,8 +442,8 @@ jobs:
       - uses: pnpm/action-setup@v2
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'pnpm'
+          node-version: "18"
+          cache: "pnpm"
 
       - run: pnpm install
       - run: pnpm test
@@ -431,6 +458,7 @@ jobs:
 ### Pre-commit Hook
 
 Add to `.husky/pre-commit`:
+
 ```bash
 #!/bin/sh
 pnpm test
@@ -441,38 +469,38 @@ pnpm test
 ### Testing Loading States
 
 ```javascript
-it('should show loading spinner', () => {
+it("should show loading spinner", () => {
   render(<MyComponent isLoading={true} />);
-  expect(screen.getByText('Loading...')).toBeInTheDocument();
+  expect(screen.getByText("Loading...")).toBeInTheDocument();
 });
 
-it('should hide loading spinner when loaded', () => {
+it("should hide loading spinner when loaded", () => {
   const { rerender } = render(<MyComponent isLoading={true} />);
   rerender(<MyComponent isLoading={false} />);
-  expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+  expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
 });
 ```
 
 ### Testing Error States
 
 ```javascript
-it('should display error message', () => {
+it("should display error message", () => {
   render(<MyComponent error="Something went wrong" />);
-  expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+  expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 });
 ```
 
 ### Testing Conditional Rendering
 
 ```javascript
-it('should show admin panel for admin users', () => {
-  render(<Dashboard user={{ role: 'admin' }} />);
-  expect(screen.getByText('Admin Panel')).toBeInTheDocument();
+it("should show admin panel for admin users", () => {
+  render(<Dashboard user={{ role: "admin" }} />);
+  expect(screen.getByText("Admin Panel")).toBeInTheDocument();
 });
 
-it('should hide admin panel for regular users', () => {
-  render(<Dashboard user={{ role: 'user' }} />);
-  expect(screen.queryByText('Admin Panel')).not.toBeInTheDocument();
+it("should hide admin panel for regular users", () => {
+  render(<Dashboard user={{ role: "user" }} />);
+  expect(screen.queryByText("Admin Panel")).not.toBeInTheDocument();
 });
 ```
 
@@ -481,7 +509,7 @@ it('should hide admin panel for regular users', () => {
 ### Using screen.debug()
 
 ```javascript
-it('should render correctly', () => {
+it("should render correctly", () => {
   render(<MyComponent />);
   screen.debug(); // Prints the DOM tree
 });
@@ -490,9 +518,9 @@ it('should render correctly', () => {
 ### Using logRoles()
 
 ```javascript
-import { logRoles } from '@testing-library/react';
+import { logRoles } from "@testing-library/react";
 
-it('should have accessible roles', () => {
+it("should have accessible roles", () => {
   const { container } = render(<MyComponent />);
   logRoles(container); // Shows all available roles
 });
@@ -501,9 +529,9 @@ it('should have accessible roles', () => {
 ### Accessing the Container
 
 ```javascript
-it('should have correct structure', () => {
+it("should have correct structure", () => {
   const { container } = render(<MyComponent />);
-  const element = container.querySelector('.custom-class');
+  const element = container.querySelector(".custom-class");
   expect(element).toBeInTheDocument();
 });
 ```

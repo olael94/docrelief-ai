@@ -357,6 +357,7 @@ export default function CommitPage() {
           isOpen={showSuccessModal}
           onClose={() => setShowSuccessModal(false)}
           commitData={commitResult}
+          readmeId={readmeId}
         />
       </div>
     </>
