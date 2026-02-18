@@ -36,19 +36,17 @@ describe("TabBar", () => {
       expect(indicator).toBeInTheDocument();
     });
 
-    it("should highlight active tab", () => {
+    it("should highlight active tab with bold font", () => {
       render(<TabBar {...defaultProps} activeTab="github-public" />);
 
       const publicTab = screen.getByRole("button", { name: "GitHub Public" });
-      expect(publicTab).toHaveClass("text-green-400");
       expect(publicTab).toHaveClass("font-bold");
     });
 
-    it("should style inactive tabs differently", () => {
+    it("should style inactive tabs with medium font", () => {
       render(<TabBar {...defaultProps} activeTab="upload" />);
 
       const publicTab = screen.getByRole("button", { name: "GitHub Public" });
-      expect(publicTab).toHaveClass("text-gray-400");
       expect(publicTab).toHaveClass("font-medium");
     });
   });

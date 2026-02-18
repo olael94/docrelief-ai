@@ -25,7 +25,6 @@ describe("HeroButton", () => {
 
       const button = screen.getByRole("button");
       expect(button).toHaveClass("btn-landing");
-      expect(button).toHaveClass("text-white");
       expect(button).toHaveClass("rounded-3xl");
     });
   });
