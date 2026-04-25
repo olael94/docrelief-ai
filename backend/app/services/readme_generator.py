@@ -17,6 +17,63 @@ import os
 logger = logging.getLogger(__name__)
 
 
+def build_tree_from_paths(paths):
+    if not paths:
+        return ""
+
+    # Build adjacency map: full_path -> [child_full_paths]
+    children_map = {}
+    all_paths = set(p.rstrip("/") for p in paths)
+
+    for path in paths:
+        path = path.rstrip("/")
+        parts = path.split("/")
+        parent = "/".join(parts[:-1])
+
+        if parent not in children_map:
+            children_map[parent] = []
+        if path not in children_map[parent]:
+            children_map[parent].append(path)
+
+        if path not in children_map:
+            children_map[path] = []
+
+    # Roots are paths whose parent is not in the path set
+    roots = []
+    for path in paths:
+        path = path.rstrip("/")
+        parts = path.split("/")
+        parent = "/".join(parts[:-1])
+        if parent not in all_paths and path not in roots:
+            roots.append(path)
+
+    # Track which entries are directories (original paths end with "/")
+    dir_paths = set(p.rstrip("/") for p in paths if p.endswith("/"))
+
+    lines = []
+
+    def render(node, indent):
+        is_dir = node in dir_paths
+        collapsed_name = node.split("/")[-1]
+        current = node
+        # Only collapse single-child chains for directories
+        while is_dir and len(children_map.get(current, [])) == 1:
+            child = children_map[current][0]
+            if child not in dir_paths:
+                break
+            collapsed_name += "/" + child.split("/")[-1]
+            current = child
+        suffix = "/" if is_dir else ""
+        lines.append("    " * indent + collapsed_name + suffix)
+        for child in sorted(children_map.get(current, [])):
+            render(child, indent + 1)
+
+    for root in sorted(roots):
+        render(root, 0)
+
+    return "\n".join(lines)
+
+
 def create_readme_prompt(repo_data: Dict[str, Any], changes: Optional[Dict] = None) -> str:  # Added changes param for cache
     """
     Creates a structured prompt to generate README based on repository data.
@@ -31,15 +88,15 @@ def create_readme_prompt(repo_data: Dict[str, Any], changes: Optional[Dict] = No
     description = repo_data.get("description", "")
     language = repo_data.get("language", "Unknown")
     
-    structure = "\n".join(repo_data.get("structure", [])[:20])  # Limit structure
+    structure = build_tree_from_paths(repo_data.get("structure", []))
     
     config_files_content = ""
     for file_path, content in list(repo_data.get("config_files", {}).items())[:5]:
         config_files_content += f"\n\n### {file_path}\n```\n{content[:1000]}\n```"
     
     main_files_summary = ""
-    for file_path in list(repo_data.get("main_files", {}).keys())[:10]:
-        main_files_summary += f"- {file_path}\n"
+    for file_path, content in list(repo_data.get("main_files", {}).items())[:3]:
+        main_files_summary += f"\n\n### {file_path}\n```\n{content[:200]}\n```"
     
     # Note: We don't include existing README to avoid bias in generation
     
@@ -64,7 +121,7 @@ def create_readme_prompt(repo_data: Dict[str, Any], changes: Optional[Dict] = No
 
 Generate a complete README.md in English that includes:
 
-1. **Title and Description**: A clear title and concise description of what the system/project does, based on code and configuration file analysis.
+1. **Title and Description**: Write 2-3 sentences that introduce the project to a visitor, recruiter, or developer seeing it for the first time. Explain what it does, the problem it solves or the domain it targets, and any notable aspects like security, deployment setup, or architectural decisions. Do not repeat the tech stack or list features — save those for their own sections.
 
 2. **Features**: List the main features of the system, inferred from the structure and analyzed files.
 
@@ -74,14 +131,44 @@ Generate a complete README.md in English that includes:
 
 5. **How to Run Locally**: 
    - Detailed step-by-step instructions to set up and run the project locally
-   - How to install dependencies
+   - For the package manager, check the configuration files: if `pnpm-lock.yaml` is present use `pnpm`, if `yarn.lock` is present use `yarn`, otherwise use `npm`
+   - For install and run commands, extract the exact scripts from `package.json` scripts field if available (e.g. `dev`, `start`, `test`, `build`). Do not guess commands
+   - For Python projects, use the exact start command based on what is detected (uvicorn, flask run, python manage.py runserver, etc.)
+   - If `docker-compose.yml` is present in the configuration files, include a Docker setup option as the first/recommended approach
    - How to configure environment variables (if necessary)
-   - How to run the server/application
    - How to run tests (if applicable)
 
-6. **Project Structure**: A brief explanation of the directory structure.
+6. **Project Structure**: Copy the exact structure from the "Project Structure" section above into a single fenced code block — do not expand, reformat, or reorder it. For each top-level entry only (depth 0), append a `#` comment on the same line. All nested entries must be included exactly as given with no comments. IMPORTANT: after the closing fence write nothing — no bullet points, no list, no paragraph. The code block is the entire section. Example:
+```
+bin/                                    # Maven wrapper scripts
+docs/                                   # Project documentation
+sql/                                    # Database initialization scripts
+src/main/
+    java/edu/ensign/cs460/banking_api/
+        config/                         # Security and app configuration
+        controller/                     # REST API controllers
+        dto/                            # Data transfer objects
+        exception/                      # Exception handling
+        models/                         # Domain models
+        repository/                     # Data access layer
+        security/                       # Security components
+        service/impl/                   # Business logic
+    resources/                          # Application resources
+.env.example                            # Environment variable template
+docker-compose.yml                      # Local MySQL setup
+pom.xml                                 # Maven build configuration
+```
 
-7. **Configuration**: Instructions about important configuration files (.env, config files, etc.).
+7. **Environment Variables**: If a `.env.example` file is present in the configuration files, generate a markdown table with columns: `Variable`, `Description`, and `Required`. Extract every key from the `.env.example` content and populate the table accurately. Mark a variable as Required if it has no default value or is clearly essential, otherwise mark it as Optional. Do not guess or invent variables — only include what is actually in the `.env.example` file. If no `.env.example` is found, skip this section entirely.
+
+8. **License**: If a `LICENSE` file is detected in the project structure, include a license section stating the license type and referencing the LICENSE file. If no LICENSE file is found, skip this section entirely.
+
+9. **Badges at the top**: Directly under the project title, include badges all on a single line with no line breaks between them — written consecutively with just a space separating each one. Use this exact format with version, official brand color, logo, and a clickable link: `[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://python.org)`. Extract version numbers from configuration files (requirements.txt, package.json, etc.). Include:
+   - A license badge only if a LICENSE file is detected
+   - Tech stack badges for each technology detected from configuration files, using accurate official colors, logo slugs, real version numbers, and correct official website links
+   Skip any badge you cannot confirm from the actual project data.
+
+10. **Demo / Live Link**: If a `vercel.json`, `netlify.toml`, or `.railway.json` is detected in the project structure, include a demo section with a placeholder comment `<!-- Add your live demo URL here -->`. If none of those files are detected, skip this section entirely.
 
 Use appropriate Markdown formatting. Be specific and practical in execution instructions. If you cannot infer specific information from the code, use generic examples appropriate for the detected language/technology.
 

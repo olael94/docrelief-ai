@@ -3,6 +3,22 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
+  // Pre-process: join consecutive badge lines onto a single line so they render inline
+  const processedContent = React.useMemo(() => {
+    if (!content) return content;
+    const isBadgeLine = (line) => {
+      const t = line.trim();
+      return t.startsWith('[![') && t.endsWith(')');
+    };
+    return content.split('\n').reduce((acc, line) => {
+      if (isBadgeLine(line) && acc.length > 0 && isBadgeLine(acc[acc.length - 1])) {
+        acc[acc.length - 1] = acc[acc.length - 1].trim() + ' ' + line.trim();
+      } else {
+        acc.push(line);
+      }
+      return acc;
+    }, []).join('\n');
+  }, [content]);
   const components = {
     code: ({ inline, className, children, ...props }) => {
       const match = /language-(\w+)/.exec(className || "");
@@ -179,6 +195,14 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
         {children}
       </a>
     ),
+
+    img: ({ src, alt }) => (
+      <img
+        src={src}
+        alt={alt}
+        style={{ display: "inline-block", verticalAlign: "middle", margin: "2px" }}
+      />
+    ),
   };
 
   if (isLoading) {
@@ -208,7 +232,7 @@ const PreviewPanel = ({ content, isLoading = false, previewRef }) => {
       >
         <div className="max-w-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-            {content ||
+            {processedContent ||
               "# Your README will appear here\n\nStart typing in the editor to see the live preview..."}
           </ReactMarkdown>
         </div>

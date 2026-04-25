@@ -306,53 +306,8 @@ def _fetch_repository_content_sync(
             f"[Repository Info] {result['name']} - Language: {result['language']}, Description: {result['description'][:50] if result['description'] else 'N/A'}..."
         )
 
-        # Important configuration files
-        config_file_patterns = [
-            "package.json",
-            "requirements.txt",
-            "Pipfile",
-            "pyproject.toml",
-            "Dockerfile",
-            "docker-compose.yml",
-            ".env.example",
-            "Cargo.toml",
-            "go.mod",
-            "pom.xml",
-            "build.gradle",
-            "Makefile",
-            "CMakeLists.txt",
-            "setup.py",
-            "setup.cfg",
-            "composer.json",
-            "Gemfile",
-            "tsconfig.json",
-            "package-lock.json",
-            "yarn.lock",
-            "Pipfile.lock",
-        ]
-
-        # Main code extensions
-        code_extensions = [
-            ".py",
-            ".js",
-            ".ts",
-            ".java",
-            ".go",
-            ".rs",
-            ".cpp",
-            ".c",
-            ".cs",
-            ".php",
-            ".rb",
-            ".swift",
-            ".kt",
-        ]
-
-        file_count = 0
-
-        # Search for README
+        # Search for existing README
         try:
-            logger.debug("[README Search] Looking for existing README files...")
             readme_files = ["README.md", "README.txt", "README", "readme.md"]
             for readme_name in readme_files:
                 try:
@@ -361,241 +316,165 @@ def _fetch_repository_content_sync(
                         result["readme"] = readme_content.decoded_content.decode(
                             "utf-8", errors="ignore"
                         )
-                        logger.info(
-                            f"[README Search] Found existing README: {readme_name} ({len(result['readme'])} chars)"
-                        )
+                        logger.info(f"[README Search] Found: {readme_name}")
                         break
                 except:
                     continue
-            if not result["readme"]:
-                logger.debug("[README Search] No existing README found")
         except Exception as e:
-            logger.warning(f"[README Search] Error searching for README: {str(e)}")
+            logger.warning(f"[README Search] Error: {str(e)}")
 
-        # Search files in root and main directories
-        def get_repo_structure(contents, path="", depth=0, max_depth=4):
-            """Recursively searches repository structure"""
-            nonlocal file_count
+        # Noise directories to skip
+        noise_dir_names = {
+            "build", "dist", ".vscode", ".idea", "__pycache__",
+            "node_modules", ".cache", "coverage", "htmlcov",
+            ".pytest_cache", "venv", ".venv", "env", ".next",
+            "target", "out", ".gradle", ".autograde", ".devcontainer",
+            ".mvn", ".github", "test", "tests", "spec", "specs",
+            "__tests__", "__test__",
+        }
 
-            if depth > max_depth or file_count >= max_files:
-                return
+        # Config files to prioritize reading
+        config_file_patterns = {
+            "package.json", "requirements.txt", "Pipfile", "pyproject.toml",
+            "Dockerfile", "docker-compose.yml", ".env.example", "Cargo.toml",
+            "go.mod", "pom.xml", "build.gradle", "Makefile", "CMakeLists.txt",
+            "setup.py", "setup.cfg", "composer.json", "Gemfile", "tsconfig.json",
+        }
 
-            for content in contents:
-                if file_count >= max_files:
-                    break
+        # Code file extensions
+        code_extensions = {
+            ".py", ".js", ".ts", ".java", ".go", ".rs", ".cpp", ".c",
+            ".cs", ".php", ".rb", ".swift", ".kt",
+        }
 
-                # Log every item returned from GitHub
-                content_path = (
-                    content.path
-                    if hasattr(content, "path")
-                    else f"{path}{content.name}"
-                )
-                content_name_lower = content.name.lower()
-                content_path_lower = content_path.lower()
+        try:
+            logger.info("[Tree API] Fetching full repository tree in one call...")
+            # Get the default branch and its latest commit SHA
+            default_branch = repo.default_branch
+            branch_commit = repo.get_branch(default_branch).commit
+            # One API call that returns every file and folder in the repo recursively
+            git_tree = repo.get_git_tree(sha=branch_commit.sha, recursive=True)
 
-                logger.debug(
-                    f"[GitHub Item] path={content_path}, type={content.type}, name={content.name}"
-                )
+            all_elements = git_tree.tree
+            logger.info(f"[Tree API] Got {len(all_elements)} elements")
 
-                # Skip test directories and files
-                test_dir_names = [
-                    "test",
-                    "tests",
-                    "spec",
-                    "specs",
-                    "__tests__",
-                    "__test__",
-                ]
-                is_test_dir = content.type == "dir" and (
-                    content_name_lower in test_dir_names
-                    or "/test/" in content_path_lower
-                    or "/tests/" in content_path_lower
-                    or "/spec/" in content_path_lower
-                    or content_path_lower.endswith("/test")
-                    or content_path_lower.endswith("/tests")
-                )
+            # Lists to track what we find — filled as we loop through elements
+            priority_config_files = []   # e.g. package.json, requirements.txt
+            high_value_code_files = []   # entry points, controllers, routes, services
+            medium_value_code_files = [] # other code files that aren't low value
+            root_files = []              # files sitting at the root level
 
-                # Check if file is a test file
-                is_test_file = content.type == "file" and (
-                    any(
-                        content_name_lower.startswith("test_")
-                        or content_name_lower.endswith("_test." + ext)
-                        for ext in code_extensions
-                    )
-                    or any(
-                        content_name_lower.endswith(".test." + ext)
-                        for ext in code_extensions
-                    )
-                    or content_name_lower.endswith("_test.py")
-                    or content_name_lower.endswith(".spec.")
-                    or content_name_lower.endswith(".test.")
-                    or "/test/" in content_path_lower
-                    or "/tests/" in content_path_lower
-                )
+            # File name patterns to prioritize or skip
+            high_value_patterns = [
+                'application', 'main', 'app', 'controller', 'router', 'route',
+                'config', 'security', 'index', 'server'
+            ]
+            low_value_patterns = [
+                'dto', 'model', 'entity', 'util', 'helper', 'exception',
+                'repository', 'mapper', 'constant', 'migration'
+            ]
 
-                if is_test_dir or is_test_file:
-                    logger.debug(
-                        f"[Skip] Ignoring test file/directory: {content_path_lower}"
-                    )
+            for element in all_elements:
+                path = element.path        # full path e.g. src/main/java/App.java
+                parts = path.split("/")    # ['src', 'main', 'java', 'App.java']
+                name = parts[-1]           # just the file/folder name
+                name_lower = name.lower()
+                depth = len(parts) - 1     # 0 = root level, 1 = one level deep, etc.
+
+                # Skip this element if any of its parent folders is a noise dir
+                if any(p.lower() in noise_dir_names for p in parts[:-1]):
+                    continue
+                # Skip if this directory itself is noise
+                if element.type == "tree" and name_lower in noise_dir_names:
                     continue
 
-                if content.type == "dir":
-                    # Add directory to structure (up to depth 3 for display)
-                    if depth <= 3:
-                        result["structure"].append(f"{path}{content.name}/")
+                if element.type == "tree":
+                    # It's a directory — add it to the structure list
+                    result["structure"].append(path + "/")
+                elif element.type == "blob":
+                    # It's a file — if it's at root level, show it in structure too
+                    if depth == 0:
+                        # Only include root files that are meaningful for README generation
+                        meaningful_root_files = {
+                            'readme.md', 'license', 'license.md', 'license.txt',
+                            'makefile', 'dockerfile', 'docker-compose.yml',
+                            'docker-compose.yaml', '.env.example', 'package.json',
+                            'requirements.txt', 'pom.xml', 'build.gradle',
+                            'cargo.toml', 'go.mod', 'pyproject.toml', 'setup.py',
+                            'gemfile', 'composer.json', 'tsconfig.json',
+                        }
+                        if name_lower in meaningful_root_files:
+                            root_files.append(path)
 
-                    # Important code directories that we should always explore deeply
-                    # These are common across many languages and project structures
-                    important_code_dirs = [
-                        "src",
-                        "app",
-                        "lib",
-                        "main",
-                        "server",
-                        "client",
-                        "backend",
-                        "frontend",
-                        "cmd",
-                        "pkg",
-                        "internal",
-                        "components",
-                        "pages",
-                        "services",
-                        "controllers",
-                        "models",
-                        "views",
-                        "routes",
-                        "handlers",
-                        "utils",
-                        "helpers",
-                    ]
-
-                    # Check if we're inside a path that starts with important code directories
-                    # Examples: src/, src/main/, src/main/java/, app/, lib/, cmd/, pkg/, etc.
-                    # This works for Java (src/main/java/), Python (src/), Go (cmd/, pkg/), Node.js (src/), etc.
-                    is_in_code_path = any(
-                        content_path_lower.startswith(f"{dir_name}/")
-                        or content_path_lower == dir_name
-                        or f"/{dir_name}/" in content_path_lower
-                        for dir_name in important_code_dirs
-                    )
-
-                    # Always enter directories if:
-                    # 1. It's in the important code directories list, OR
-                    # 2. We're at root (depth 0), OR
-                    # 3. We're inside a code path (continue descending - no strict depth limit), OR
-                    # 4. We're still within reasonable depth (for other paths)
-                    should_enter = (
-                        content.name.lower() in important_code_dirs
-                        or depth == 0
-                        or is_in_code_path  # Always continue in code paths (works for any language)
-                        or depth < 3  # Always enter up to depth 3 for other paths
-                    )
-
-                    if should_enter:
-                        try:
-                            logger.debug(
-                                f"[Directory] Entering: {content_path} (depth={depth}, is_in_code_path={is_in_code_path})"
-                            )
-                            sub_contents = repo.get_contents(content.path)
-                            get_repo_structure(
-                                sub_contents,
-                                f"{path}{content.name}/",
-                                depth + 1,
-                                max_depth,
-                            )
-                        except Exception as e:
-                            logger.debug(
-                                f"[Structure] Error entering directory {content.path}: {str(e)}"
-                            )
-                            continue
-                else:
-                    # It's a file
-                    file_count += 1
-                    file_path = f"{path}{content.name}"
-
-                    # Check if it's a configuration file
-                    if content.name in config_file_patterns or any(
-                        content.name.endswith(ext)
-                        for ext in [".toml", ".yaml", ".yml", ".json", ".lock"]
+                    # Check if it's a config file we want to read
+                    if name in config_file_patterns or any(
+                        name.endswith(ext) for ext in [".toml", ".yaml", ".yml", ".json", ".lock"]
                     ):
-                        logger.debug(f"[File Decision] {file_path} -> CONFIG FILE")
-                        try:
-                            file_content = content.decoded_content.decode(
-                                "utf-8", errors="ignore"
-                            )
-                            result["config_files"][file_path] = file_content[
-                                :5000
-                            ]  # Limit size
-                            logger.debug(
-                                f"[Config File] Found: {file_path} ({len(file_content)} chars, limited to 5000)"
-                            )
-                        except Exception as e:
-                            logger.warning(
-                                f"[Config File] Error reading {file_path}: {str(e)}"
-                            )
-
-                    # Check if it's a main code file
-                    elif any(content.name.endswith(ext) for ext in code_extensions):
-                        logger.debug(f"[File Decision] {file_path} -> CODE FILE")
-                        # Read only some main files (not all)
-                        if file_count <= max_files // 2:  # Half of files can be code
-                            try:
-                                file_content = content.decoded_content.decode(
-                                    "utf-8", errors="ignore"
-                                )
-                                # Limit file size
-                                result["main_files"][file_path] = file_content[:3000]
-                                logger.debug(
-                                    f"[Code File] Found: {file_path} ({len(file_content)} chars, limited to 3000)"
-                                )
-                            except Exception as e:
-                                logger.warning(
-                                    f"[Code File] Error reading {file_path}: {str(e)}"
-                                )
-                        else:
-                            logger.debug(
-                                f"[File Decision] {file_path} -> CODE FILE (skipped, file_count={file_count} > {max_files // 2})"
-                            )
-                    else:
-                        logger.debug(
-                            f"[File Decision] {file_path} -> IGNORED (not config or code)"
+                        priority_config_files.append(path)
+                    # Check if it's a code file we want to read
+                    elif any(name.endswith(ext) for ext in code_extensions):
+                        is_test = (
+                            name_lower.startswith("test_")
+                            or name_lower.endswith("_test.py")
+                            or ".test." in name_lower
+                            or ".spec." in name_lower
+                            or any(p.lower() in {"test", "tests", "spec", "specs"} for p in parts)
                         )
+                        if not is_test:
+                            is_high_value = any(k in name_lower for k in high_value_patterns)
+                            is_low_value = any(k in name_lower for k in low_value_patterns)
+                            if is_high_value:
+                                high_value_code_files.append(path)
+                            elif not is_low_value:
+                                medium_value_code_files.append(path)
 
-        # Start from root
-        try:
-            logger.debug("[Structure] Starting repository structure analysis...")
-            root_contents = repo.get_contents("")
-            get_repo_structure(root_contents)
+            # Append root files at the end of the structure list
+            result["structure"].extend(root_files)
+
+            # Combine: high value first, then medium value
+            priority_code_files = high_value_code_files + medium_value_code_files
+
             logger.info(
-                f"[Structure] Analysis complete - {len(result['structure'])} directories, {len(result['config_files'])} config files, {len(result['main_files'])} code files"
+                f"[Tree API] Found {len(result['structure'])} dirs, "
+                f"{len(priority_config_files)} config files, "
+                f"{len(priority_code_files)} code files "
+                f"({len(high_value_code_files)} high-value, {len(medium_value_code_files)} medium)"
             )
-            logger.debug(
-                f"   - Directories: {', '.join(result['structure'][:15])}{'...' if len(result['structure']) > 15 else ''}"
+
+            # Read config files (up to 10) — these inform tech stack, env vars, run commands
+            for file_path in priority_config_files[:10]:
+                try:
+                    file_content = repo.get_contents(file_path).decoded_content.decode("utf-8", errors="ignore")
+                    result["config_files"][file_path] = file_content[:5000]
+                    logger.debug(f"[Config File] Read: {file_path}")
+                except Exception as e:
+                    logger.warning(f"[Config File] Error reading {file_path}: {str(e)}")
+
+            # Read only top 5 code files (high-value first) with tight content limit
+            for file_path in priority_code_files[:5]:
+                try:
+                    file_content = repo.get_contents(file_path).decoded_content.decode("utf-8", errors="ignore")
+                    result["main_files"][file_path] = file_content[:500]
+                    logger.debug(f"[Code File] Read: {file_path}")
+                except Exception as e:
+                    logger.warning(f"[Code File] Error reading {file_path}: {str(e)}")
+
+            logger.info(
+                f"[Tree API] Complete - {len(result['config_files'])} config, "
+                f"{len(result['main_files'])} code files read"
             )
-            logger.debug(
-                f"   - Config files: {', '.join(list(result['config_files'].keys())[:10])}{'...' if len(result['config_files']) > 10 else ''}"
-            )
-            logger.debug(
-                f"   - Code files: {', '.join(list(result['main_files'].keys())[:10])}{'...' if len(result['main_files']) > 10 else ''}"
-            )
-            logger.debug(f"   - Total files processed: {file_count}/{max_files}")
+
         except Exception as e:
-            logger.error(f"[Structure] Error analyzing structure: {str(e)}")
-            # If fails, try to fetch only main files
-            try:
-                for file_name in config_file_patterns[:10]:  # First 10 config files
-                    try:
-                        content = repo.get_contents(file_name)
-                        if content and content.type == "file":
-                            file_content = content.decoded_content.decode(
-                                "utf-8", errors="ignore"
-                            )
-                            result["config_files"][file_name] = file_content[:5000]
-                    except:
-                        continue
-            except:
-                pass
+            logger.error(f"[Tree API] Failed: {str(e)}, falling back to direct fetch")
+            # Fallback: try to read key config files directly without tree traversal
+            for file_name in list(config_file_patterns)[:10]:
+                try:
+                    content = repo.get_contents(file_name)
+                    if content and content.type == "file":
+                        file_content = content.decoded_content.decode("utf-8", errors="ignore")
+                        result["config_files"][file_name] = file_content[:5000]
+                except:
+                    continue
 
         return result
 
