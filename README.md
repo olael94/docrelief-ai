@@ -76,7 +76,7 @@ Frontend runs on: http://localhost:5173
 ### 5. Verify Setup
 
 - Visit http://localhost:5173 - Should show "DocRelief AI" and "Backend Status: healthy"
-- Visit http://localhost:8000/health - Should show `{"status": "healthy", "database": "connected"}`
+- Visit http://localhost:8000/api/health - Should show `{"status": "healthy", "database": "connected"}`
 
 ## Daily Development
 
