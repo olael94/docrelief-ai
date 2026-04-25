@@ -43,6 +43,46 @@ class TestCreateReadmePrompt:
         prompt = create_readme_prompt(sample_repo_data)
 
         assert "src/main.py" in prompt
+        # Content should be included as a code snippet, not just the path
+        assert "from fastapi import FastAPI" in prompt
+        assert "```" in prompt
+
+    def test_prompt_main_files_sends_content_not_just_paths(self, sample_repo_data):
+        prompt = create_readme_prompt(sample_repo_data)
+
+        for file_path, content in list(sample_repo_data["main_files"].items())[:3]:
+            assert file_path in prompt
+            assert content[:50] in prompt  # actual content is present, not just the path
+
+    def test_prompt_limits_main_files_to_3(self):
+        data = {
+            "name": "project",
+            "description": "",
+            "language": "Python",
+            "structure": [],
+            "config_files": {},
+            "main_files": {f"file_{i}.py": f"content_{i}" for i in range(10)},
+        }
+
+        prompt = create_readme_prompt(data)
+        assert "file_0.py" in prompt
+        assert "file_2.py" in prompt
+        assert "file_3.py" not in prompt  # only first 3 are included
+
+    def test_prompt_main_files_truncates_content_at_200_chars(self):
+        long_content = "x" * 500
+        data = {
+            "name": "project",
+            "description": "",
+            "language": "Python",
+            "structure": [],
+            "config_files": {},
+            "main_files": {"main.py": long_content},
+        }
+
+        prompt = create_readme_prompt(data)
+        assert "x" * 200 in prompt
+        assert "x" * 201 not in prompt
 
     def test_prompt_with_changes(self, sample_repo_data):
         changes = {
@@ -90,9 +130,10 @@ class TestCreateReadmePrompt:
         }
 
         prompt = create_readme_prompt(data)
-        # Should limit to first 20
-        assert "dir_19/" in prompt
-        assert "dir_20/" not in prompt
+        # Full structure is sent — no artificial limit
+        assert "dir_0/" in prompt
+        assert "dir_29/" in prompt
+        assert "Project Structure" in prompt
 
     def test_prompt_limits_config_files(self):
         data = {
